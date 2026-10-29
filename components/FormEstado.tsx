@@ -10,7 +10,7 @@ export function FormEstado({ action, children, className }: {
     <form action={formAction} className={className}>
       {children}
       {estado?.error && <p role="alert" className="mt-3 text-sm font-medium text-red-700">{estado.error}</p>}
-      {estado?.ok && <p role="status" className="mt-3 text-sm font-medium text-verde">{estado.ok}</p>}
+      {estado?.ok && <p role="status" className="mt-3 text-sm font-medium text-batt-700">{estado.ok}</p>}
     </form>
   );
 }

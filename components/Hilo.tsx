@@ -1,5 +1,5 @@
-import { enviarMensaje } from "@/app/actions";
-import { Submit } from "@/components/Submit";
+import { AlFinal } from "@/components/AlFinal";
+import { FormMensaje } from "@/components/FormMensaje";
 import { cx, fechaHora } from "@/lib/utils";
 import type { Mensaje } from "@/lib/types";
 
@@ -8,27 +8,23 @@ export function Hilo({ mensajes, colaboradorId, clienteId, yo }: {
 }) {
   return (
     <div className="flex h-full flex-col">
-      <ol className="flex-1 space-y-3 overflow-y-auto p-4">
-        {mensajes.length === 0 && <li className="text-sm text-navy/60">Todavía no hay mensajes en esta conversación.</li>}
+      <ol className="flex flex-1 flex-col gap-3 overflow-y-auto p-5">
+        {mensajes.length === 0 && <li className="m-auto max-w-xs text-center text-sm text-muted">Todavía no hay mensajes aquí. Escribe el primero.</li>}
         {mensajes.map((m) => {
           const mio = m.remitente === yo;
+          const sistema = m.remitente === "sistema";
           return (
-            <li key={m.id} className={cx("max-w-[85%] rounded-xl px-3.5 py-2 text-sm", m.remitente === "sistema" ? "mx-auto bg-ambar-50 text-[#6b4700]" : mio ? "ml-auto bg-navy text-white" : "bg-white ring-1 ring-navy/10")}>
+            <li key={m.id} className={cx("max-w-[85%] rounded-2xl px-4 py-2.5 text-sm", sistema ? "mx-auto bg-sun-50 text-sun-700" : mio ? "ml-auto rounded-br-md bg-brand text-ink" : "rounded-bl-md bg-panel shadow-card")}>
               <p className="whitespace-pre-wrap">{m.texto}</p>
-              <p className={cx("mt-1 text-[11px]", mio && m.remitente !== "sistema" ? "text-white/60" : "text-navy/50")}>
-                {m.remitente === "sistema" ? "Aviso automático" : m.remitente === "delegado" ? "INER" : "Colaborador"} · {fechaHora(m.fecha)}
+              <p className={cx("mt-1 text-[11px]", mio && !sistema ? "text-ink/70" : "text-muted")}>
+                {sistema ? "Aviso automático" : m.remitente === "delegado" ? "INER" : "Colaborador"} · {fechaHora(m.fecha)}
               </p>
             </li>
           );
         })}
+        <AlFinal n={mensajes.length} />
       </ol>
-      <form action={enviarMensaje} className="flex gap-2 border-t border-navy/10 bg-white p-3">
-        <input type="hidden" name="colaborador_id" value={colaboradorId} />
-        <input type="hidden" name="cliente_id" value={clienteId ?? ""} />
-        <label className="sr-only" htmlFor="texto">Mensaje</label>
-        <textarea id="texto" name="texto" required rows={2} maxLength={5000} className="input resize-none" placeholder="Escribe un mensaje" />
-        <Submit className="btn-verde" pendiente="Enviando…">Enviar</Submit>
-      </form>
+      <FormMensaje colaboradorId={colaboradorId} clienteId={clienteId} />
     </div>
   );
 }

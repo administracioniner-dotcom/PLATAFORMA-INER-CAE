@@ -11,7 +11,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   ];
   return (
     <>
-      <Cabecera nombre={`${profile.nombre ?? profile.email} · ${profile.rol === "admin" ? "Administrador" : "Delegado"}`} enlaces={enlaces} />
+      <Cabecera nombre={profile.nombre ?? profile.email} rol={profile.rol === "admin" ? "Administrador" : "Delegado"} enlaces={enlaces} />
       <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
     </>
   );
