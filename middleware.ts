@@ -19,7 +19,10 @@ export async function middleware(req: NextRequest) {
       },
     }
   );
-  const { data: { user } } = await supabase.auth.getUser();
+  // Solo decide si hay sesión; la autorización real (rol) se valida en el servidor con getUser().
+  // getClaims verifica el JWT en local y evita una llamada de red a Supabase en cada petición.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
   const path = req.nextUrl.pathname;
   const publica = PUBLICAS.some((p) => path === p || path.startsWith(p + "/"));
   if (!user && !publica) {
