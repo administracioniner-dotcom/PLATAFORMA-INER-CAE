@@ -142,6 +142,31 @@ export async function sacarDelArchivo(fd: FormData) {
 }
 
 /* ---------- Admin ---------- */
+/** Crea la cuenta directamente con correo y contraseña (sin email de invitación). */
+export async function crearCuenta(_: Estado, fd: FormData): Promise<Estado> {
+  const { supabase, user, profile } = await getSessionProfile();
+  if (!user || profile?.rol !== "admin") return { error: "Solo un administrador puede crear cuentas." };
+  const email = String(fd.get("email") ?? "").trim().toLowerCase();
+  const nombre = String(fd.get("nombre") ?? "").trim() || null;
+  const password = String(fd.get("password") ?? "");
+  const rol = String(fd.get("rol"));
+  if (!/^\S+@\S+\.\S+$/.test(email)) return { error: "Correo no válido." };
+  if (!["colaborador", "delegado", "admin"].includes(rol)) return { error: "Rol no válido." };
+  if (password.length < 10) return { error: "La contraseña debe tener al menos 10 caracteres." };
+  // El trigger handle_new_user solo crea el perfil si existe la invitación.
+  const { error: e1 } = await supabase.from("invitaciones").upsert({ email, rol, nombre, invitado_por: user.id });
+  if (e1) return { error: "No se pudo registrar la cuenta." };
+  const { error: e2 } = await createServiceClient().auth.admin.createUser({
+    email, password, email_confirm: true, user_metadata: nombre ? { nombre } : undefined,
+  });
+  if (e2) {
+    return { error: /already|registered|exists/i.test(e2.message) ? "Ya existe una cuenta con ese correo." : `No se pudo crear la cuenta: ${e2.message}` };
+  }
+  revalidatePath("/equipo/invitar");
+  revalidatePath("/equipo");
+  return { ok: `Cuenta creada para ${email}. Ya puede entrar con esa contraseña.` };
+}
+
 export async function invitar(_: Estado, fd: FormData): Promise<Estado> {
   const { supabase, user, profile } = await getSessionProfile();
   if (!user || profile?.rol !== "admin") return { error: "Solo un administrador puede invitar." };

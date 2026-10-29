@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { invitar } from "@/app/actions";
+import { crearCuenta, invitar } from "@/app/actions";
+import { CampoContrasena } from "@/components/CampoContrasena";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
 import { requireStaff } from "@/lib/auth";
@@ -16,15 +17,29 @@ export default async function Invitar() {
   const pendientes = (inv ?? []).filter((i) => !registrados.has(i.email));
   return (
     <div className="grid gap-8 lg:grid-cols-[22rem_1fr]">
-      <FormEstado action={invitar} className="h-fit space-y-4 rounded-2xl bg-white p-6 ring-1 ring-navy/10">
-        <h1 className="text-xl font-bold">Invitar a una persona</h1>
-        <div><label className="label" htmlFor="nombre">Nombre</label><input id="nombre" name="nombre" className="input" /></div>
-        <div><label className="label" htmlFor="email">Correo</label><input id="email" name="email" type="email" required className="input" /></div>
-        <div><label className="label" htmlFor="rol">Rol</label>
-          <select id="rol" name="rol" className="input" defaultValue="colaborador">{Object.entries(ROLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-        </div>
-        <Submit className="btn-verde w-full" pendiente="Enviando…">Enviar invitación</Submit>
-      </FormEstado>
+      <div className="h-fit space-y-6">
+        <FormEstado action={crearCuenta} className="space-y-4 rounded-2xl bg-white p-6 ring-1 ring-navy/10">
+          <h1 className="text-xl font-bold">Crear colaborador</h1>
+          <p className="text-sm text-navy/70">Creas el correo y la contraseña aquí mismo. La persona entra directamente, sin esperar ningún correo.</p>
+          <div><label className="label" htmlFor="c-nombre">Nombre</label><input id="c-nombre" name="nombre" className="input" /></div>
+          <div><label className="label" htmlFor="c-email">Correo</label><input id="c-email" name="email" type="email" required className="input" /></div>
+          <CampoContrasena />
+          <div><label className="label" htmlFor="c-rol">Rol</label>
+            <select id="c-rol" name="rol" className="input" defaultValue="colaborador">{Object.entries(ROLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+          </div>
+          <Submit className="btn-verde w-full" pendiente="Creando…">Crear cuenta</Submit>
+        </FormEstado>
+        <FormEstado action={invitar} className="space-y-4 rounded-2xl bg-white p-6 ring-1 ring-navy/10">
+          <h2 className="text-lg font-bold">Invitar por correo</h2>
+          <p className="text-sm text-navy/70">Alternativa: le llega un enlace para que elija su propia contraseña.</p>
+          <div><label className="label" htmlFor="nombre">Nombre</label><input id="nombre" name="nombre" className="input" /></div>
+          <div><label className="label" htmlFor="email">Correo</label><input id="email" name="email" type="email" required className="input" /></div>
+          <div><label className="label" htmlFor="rol">Rol</label>
+            <select id="rol" name="rol" className="input" defaultValue="colaborador">{Object.entries(ROLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+          </div>
+          <Submit className="btn-primary w-full" pendiente="Enviando…">Enviar invitación</Submit>
+        </FormEstado>
+      </div>
       <div className="space-y-6">
         <section>
           <h2 className="mb-2 text-lg font-bold">Cuentas</h2>
