@@ -25,8 +25,10 @@ Como aún no tienen cuenta, créalas desde Supabase → Authentication → Users
 Después entran por `/equipo/login` y desde `/equipo/invitar` invitan al resto.
 
 ## Rutas
-- Colaborador: `/login`, `/` (mis clientes), `/mensajes`
-- Equipo: `/equipo/login`, `/equipo`, `/equipo/colaboradores/[id]`, `/equipo/mensajes`, `/equipo/invitar` (solo admin)
+- Colaborador: `/login`, `/` (mis clientes, solo lectura y solicitar pago), `/mensajes`
+- Equipo: `/equipo/login`, `/equipo`, `/equipo/colaboradores/[id]` (aquí se dan de alta los clientes), `/equipo/mensajes`, `/equipo/invitar` (solo admin)
 - Enlaces de correo: `/auth/confirm`, `/crear-contrasena`, `/recuperar`
+
+**Los clientes los crea solo el equipo** (delegado o admin), desde la ficha de cada colaborador. Los colaboradores no pueden crearlos: lo impide la política RLS `clientes_insert` (`es_staff()`).
 
 El rol siempre lo decide el servidor según la cuenta (tabla `profiles`), no la URL.
