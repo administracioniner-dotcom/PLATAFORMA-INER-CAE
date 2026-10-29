@@ -2,6 +2,8 @@ import Link from "next/link";
 import { cerrarSesion } from "@/app/actions";
 import { Marca } from "@/components/Marca";
 
+const iniciales = (n: string) => n.split(/[\s@·.]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+
 export function Cabecera({ nombre, enlaces }: { nombre: string; enlaces: { href: string; texto: string; badge?: number }[] }) {
   return (
     <header className="bg-navy text-white">
@@ -15,6 +17,7 @@ export function Cabecera({ nombre, enlaces }: { nombre: string; enlaces: { href:
             </Link>
           ))}
           <span className="mx-2 hidden text-white/60 sm:inline">{nombre}</span>
+          <span aria-hidden className="mx-1 grid h-8 w-8 place-items-center rounded-full bg-ambar text-xs font-bold text-navy">{iniciales(nombre)}</span>
           <form action={cerrarSesion}><button className="rounded-lg px-3 py-1.5 font-medium text-white/85 hover:bg-white/10">Salir</button></form>
         </nav>
       </div>
