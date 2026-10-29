@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { guardarMwh, guardarPct, marcarPagado, moverFase, sacarDelArchivo } from "@/app/actions";
+import { crearCliente, guardarMwh, guardarPct, marcarPagado, moverFase, sacarDelArchivo } from "@/app/actions";
+import { FormEstado } from "@/components/FormEstado";
+import { Submit } from "@/components/Submit";
 import { requireStaff } from "@/lib/auth";
 import { FASES, VALOR_MWH, eur, fecha } from "@/lib/utils";
 import type { ClienteStaff, Profile } from "@/lib/types";
@@ -29,6 +31,19 @@ export default async function ColaboradorDetalle({ params, searchParams }: { par
           <Link href={`/equipo/colaboradores/${id}${verArchivados ? "" : "?archivados=1"}`} className="btn btn-ghost">{verArchivados ? "Ver activos" : "Ver archivados"}</Link>
         </div>
       </div>
+
+      {!verArchivados && (
+        <section className="rounded-2xl bg-white p-5 ring-1 ring-navy/10">
+          <FormEstado action={crearCliente} className="flex flex-wrap items-end gap-3">
+            <input type="hidden" name="colaborador_id" value={id} />
+            <div className="min-w-[14rem] flex-1">
+              <label className="label" htmlFor="nombre">Nuevo cliente</label>
+              <input id="nombre" name="nombre" required maxLength={200} className="input" placeholder="Nombre o razón social" />
+            </div>
+            <Submit className="btn-verde" pendiente="Añadiendo…">Añadir cliente</Submit>
+          </FormEstado>
+        </section>
+      )}
 
       {verArchivados ? (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

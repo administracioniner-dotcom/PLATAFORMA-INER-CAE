@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { crearCliente, solicitarPago } from "@/app/actions";
-import { FormEstado } from "@/components/FormEstado";
+import { solicitarPago } from "@/app/actions";
 import { Submit } from "@/components/Submit";
 import { Fase } from "@/components/Fase";
 import { requireColaborador } from "@/lib/auth";
@@ -35,16 +34,6 @@ export default async function MisClientes({ searchParams }: { searchParams: Prom
         </dl>
       </section>
 
-      <section className="rounded-2xl bg-white p-5 ring-1 ring-navy/10">
-        <FormEstado action={crearCliente} className="flex flex-wrap items-end gap-3">
-          <div className="min-w-[14rem] flex-1">
-            <label className="label" htmlFor="nombre">Nuevo cliente</label>
-            <input id="nombre" name="nombre" required maxLength={200} className="input" placeholder="Nombre o razón social" />
-          </div>
-          <Submit className="btn-verde" pendiente="Añadiendo…">Añadir cliente</Submit>
-        </FormEstado>
-      </section>
-
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-bold">{verArchivados ? "Clientes archivados" : "Clientes"}</h2>
@@ -58,7 +47,7 @@ export default async function MisClientes({ searchParams }: { searchParams: Prom
               <tr>{["Cliente", "Fase", "MWh", "Tu %", "Tu comisión", "Cobro"].map((h) => <th key={h} className="px-4 py-3 font-semibold">{h}</th>)}</tr>
             </thead>
             <tbody className="divide-y divide-navy/10">
-              {lista.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-navy/60">{verArchivados ? "No hay clientes archivados." : "Aún no tienes clientes. Añade el primero arriba."}</td></tr>}
+              {lista.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-navy/60">{verArchivados ? "No hay clientes archivados." : "Aún no tienes clientes. INER los dará de alta por ti."}</td></tr>}
               {lista.map((c) => (
                 <tr key={c.id}>
                   <td className="px-4 py-3 font-medium">{c.nombre}</td>

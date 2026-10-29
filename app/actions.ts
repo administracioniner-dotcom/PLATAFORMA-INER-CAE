@@ -54,16 +54,6 @@ export async function guardarContrasena(_: Estado, fd: FormData): Promise<Estado
 }
 
 /* ---------- Colaborador ---------- */
-export async function crearCliente(_: Estado, fd: FormData): Promise<Estado> {
-  const nombre = String(fd.get("nombre") ?? "").trim();
-  if (!nombre) return { error: "Escribe el nombre del cliente." };
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("crear_cliente", { p_nombre: nombre });
-  if (error) return { error: "No se pudo añadir el cliente." };
-  revalidatePath("/");
-  return { ok: "Cliente añadido." };
-}
-
 export async function solicitarPago(fd: FormData) {
   const supabase = await createClient();
   await supabase.rpc("solicitar_pago", { p_cliente: String(fd.get("id")) });
@@ -95,6 +85,18 @@ async function soloStaff() {
   const s = await getSessionProfile();
   if (!s.profile || s.profile.rol === "colaborador") throw new Error("No autorizado");
   return s;
+}
+
+export async function crearCliente(_: Estado, fd: FormData): Promise<Estado> {
+  const { supabase } = await soloStaff();
+  const nombre = String(fd.get("nombre") ?? "").trim();
+  const colaboradorId = String(fd.get("colaborador_id") ?? "");
+  if (!nombre) return { error: "Escribe el nombre del cliente." };
+  if (!colaboradorId) return { error: "Falta el colaborador." };
+  const { error } = await supabase.from("clientes").insert({ colaborador_id: colaboradorId, nombre });
+  if (error) return { error: "No se pudo añadir el cliente." };
+  revalidatePath(`/equipo/colaboradores/${colaboradorId}`);
+  return { ok: "Cliente añadido." };
 }
 
 export async function moverFase(fd: FormData) {
