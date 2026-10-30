@@ -7,7 +7,7 @@ import type { ClienteStaff, Profile } from "@/lib/types";
 export default async function ColaboradorDetalle({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ archivados?: string }> }) {
   const { id } = await params;
   const verArchivados = (await searchParams).archivados === "1";
-  const { supabase } = await requireStaff();
+  const { supabase, profile } = await requireStaff();
   const [{ data: p }, { data }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", id).eq("rol", "colaborador").single(),
     supabase.from("clientes").select("*").eq("colaborador_id", id).order("created_at"),
@@ -16,7 +16,7 @@ export default async function ColaboradorDetalle({ params, searchParams }: { par
   return (
     <>
       <AutoRefresh cada={30} />
-      <TableroCliente col={p as Profile} clientes={(data ?? []) as ClienteStaff[]} verArchivados={verArchivados} />
+      <TableroCliente col={p as Profile} clientes={(data ?? []) as ClienteStaff[]} verArchivados={verArchivados} esAdmin={profile.rol === "admin"} />
     </>
   );
 }

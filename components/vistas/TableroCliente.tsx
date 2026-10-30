@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { crearCliente, guardarMwh, guardarPct, marcarPagado, moverFase, sacarDelArchivo } from "@/app/actions";
+import { crearCliente, guardarMwh, guardarPct, marcarPagado, moverFase, restablecerContrasena, sacarDelArchivo } from "@/app/actions";
+import { CampoContrasena } from "@/components/CampoContrasena";
 import { Avatar } from "@/components/Avatar";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
 import { FASES, FASE_COLOR, VALOR_MWH, eur, fecha } from "@/lib/utils";
 import type { ClienteStaff, Profile } from "@/lib/types";
 
-export function TableroCliente({ col, clientes, verArchivados }: { col: Profile; clientes: ClienteStaff[]; verArchivados: boolean }) {
+export function TableroCliente({ col, clientes, verArchivados, esAdmin = false }: { col: Profile; clientes: ClienteStaff[]; verArchivados: boolean; esAdmin?: boolean }) {
   const lista = clientes.filter((c) => (verArchivados ? !!c.archivado_at : !c.archivado_at));
   const id = col.id;
   return (
@@ -25,6 +26,17 @@ export function TableroCliente({ col, clientes, verArchivados }: { col: Profile;
           <Link href={`/equipo/colaboradores/${id}${verArchivados ? "" : "?archivados=1"}`} className="btn btn-ghost">{verArchivados ? "Ver activos" : "Ver archivados"}</Link>
         </div>
       </div>
+
+      {esAdmin && (
+        <details className="tarjeta group p-5">
+          <summary className="cursor-pointer list-none font-bold">Cambiar contraseña de {col.nombre ?? col.email}<span className="ml-2 text-sm font-normal text-muted group-open:hidden">por si no le llega el correo</span></summary>
+          <FormEstado action={restablecerContrasena} className="mt-4 max-w-md space-y-4">
+            <input type="hidden" name="colaborador_id" value={id} />
+            <CampoContrasena />
+            <Submit className="btn-primary" pendiente="Guardando…">Guardar contraseña</Submit>
+          </FormEstado>
+        </details>
+      )}
 
       {!verArchivados && (
         <FormEstado action={crearCliente} className="tarjeta flex flex-wrap items-end gap-3 p-5">

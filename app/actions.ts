@@ -34,7 +34,8 @@ export async function recuperar(_: Estado, fd: FormData): Promise<Estado> {
   const email = String(fd.get("email") ?? "").trim().toLowerCase();
   if (!email) return { error: "Escribe tu correo." };
   const supabase = await createClient();
-  await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${SITE()}/auth/confirm?next=/crear-contrasena` });
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${SITE()}/auth/confirm?next=/crear-contrasena` });
+  if (error?.status === 429) return { error: "Has pedido demasiados enlaces seguidos. Espera unos minutos y vuelve a intentarlo." };
   // Misma respuesta exista o no la cuenta.
   return { ok: "Si el correo está registrado, te hemos enviado un enlace para crear una contraseña nueva." };
 }
@@ -142,6 +143,19 @@ export async function sacarDelArchivo(fd: FormData) {
 }
 
 /* ---------- Admin ---------- */
+/** El admin fija una contraseña nueva para un colaborador, sin depender del correo. */
+export async function restablecerContrasena(_: Estado, fd: FormData): Promise<Estado> {
+  const { user, profile } = await getSessionProfile();
+  if (!user || profile?.rol !== "admin") return { error: "Solo un administrador puede cambiar contraseñas." };
+  const id = String(fd.get("colaborador_id") ?? "");
+  const password = String(fd.get("password") ?? "");
+  if (!id) return { error: "Falta la cuenta." };
+  if (password.length < 10) return { error: "La contraseña debe tener al menos 10 caracteres." };
+  const { error } = await createServiceClient().auth.admin.updateUserById(id, { password });
+  if (error) return { error: "No se pudo cambiar la contraseña." };
+  return { ok: "Contraseña cambiada. Ya puede entrar con la nueva." };
+}
+
 /** Crea la cuenta directamente con correo y contraseña (sin email de invitación). */
 export async function crearCuenta(_: Estado, fd: FormData): Promise<Estado> {
   const { supabase, user, profile } = await getSessionProfile();
