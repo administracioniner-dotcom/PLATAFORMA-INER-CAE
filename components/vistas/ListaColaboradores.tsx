@@ -62,7 +62,7 @@ export function ListaColaboradores({ filas, tot, conteos, q, f, esAdmin }: {
                   <p className="truncate font-bold">{r.p.nombre ?? r.p.email}</p>
                   <p className="truncate text-xs text-muted">{r.p.email}</p>
                 </div>
-                {r.pendientes > 0 && <span className="latido shrink-0 rounded-full bg-sun px-2.5 py-0.5 text-xs font-black text-white">{r.pendientes} pago{r.pendientes > 1 ? "s" : ""}</span>}
+                {r.pendientes > 0 && <span className="latido shrink-0 rounded-full bg-sun px-2.5 py-0.5 text-xs font-bold text-white">{r.pendientes} pago{r.pendientes > 1 ? "s" : ""}</span>}
               </div>
               {r.p.estado === "invitado" && <p className="mt-3 inline-block rounded-full bg-soft px-2.5 py-0.5 text-xs font-semibold text-muted">Aún no ha entrado</p>}
               <div className="mt-4"><Embudo conteos={r.porFase} compacto /></div>

@@ -13,7 +13,7 @@ body { @apply bg-bg text-ink antialiased; }
 .input { @apply w-full rounded-xl border border-line bg-soft px-3.5 py-2.5 text-sm text-ink placeholder:text-faint transition focus:border-sun focus:bg-panel focus:outline-none focus:ring-2 focus:ring-sun/25; }
 .label { @apply mb-1.5 block text-sm font-semibold text-ink; }
 .tarjeta { @apply rounded-2xl bg-panel shadow-card; }
-.num { @apply font-black tracking-[-0.02em] tabular-nums; }
+.num { @apply font-bold tracking-[-0.01em] tabular-nums; }
 .etiqueta { @apply text-xs font-semibold uppercase tracking-[.03em] text-muted; }
 
 /* Barra de recorrido: cada tramo crece desde la izquierda al cargar la página. */
