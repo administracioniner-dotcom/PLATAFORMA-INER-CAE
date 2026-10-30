@@ -2,15 +2,27 @@ import Link from "next/link";
 import { crearCliente, guardarMwh, guardarPct, marcarPagado, moverFase, restablecerContrasena, sacarDelArchivo } from "@/app/actions";
 import { CampoContrasena } from "@/components/CampoContrasena";
 import { Avatar } from "@/components/Avatar";
+import { Kpi, KpiFila } from "@/components/Fase";
+import { Barras } from "@/components/Graficos";
 import { FormAviso } from "@/components/FormAviso";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
-import { FASES, FASE_COLOR, VALOR_MWH, eur, fecha } from "@/lib/utils";
+import { FASES, FASE_COLOR, VALOR_MWH, claveMes, eur, eur0, fecha, num, ultimosMeses } from "@/lib/utils";
 import type { ClienteStaff, Profile } from "@/lib/types";
 
 export function TableroCliente({ col, clientes, verArchivados, esAdmin = false }: { col: Profile; clientes: ClienteStaff[]; verArchivados: boolean; esAdmin?: boolean }) {
   const lista = clientes.filter((c) => (verArchivados ? !!c.archivado_at : !c.archivado_at));
   const id = col.id;
+  // Pagos: se calculan con todos los clientes del colaborador, también los archivados.
+  const comision = (c: ClienteStaff) => ((c.mwh ?? 0) * VALOR_MWH * c.pct) / 100;
+  const pagados = clientes.filter((c) => c.pago === "paid").sort((a, b) => (b.pagado_at ?? "").localeCompare(a.pagado_at ?? ""));
+  const totalPagado = pagados.reduce((a, c) => a + comision(c), 0);
+  const porPagar = clientes.filter((c) => c.fase === 4 && c.pago !== "paid");
+  const solicitados = porPagar.filter((c) => c.pago === "requested");
+  const enTramitacion = clientes.filter((c) => c.fase < 4);
+  const suma = (cs: ClienteStaff[]) => cs.reduce((a, c) => a + comision(c), 0);
+  const meses = ultimosMeses(6);
+  const porMes = meses.map((m) => suma(pagados.filter((c) => claveMes(c.pagado_at) === m.clave)));
   return (
     <div className="space-y-5">
       <div className="tarjeta flex flex-wrap items-center justify-between gap-4 p-5">
@@ -27,6 +39,51 @@ export function TableroCliente({ col, clientes, verArchivados, esAdmin = false }
           <Link href={`/equipo/colaboradores/${id}${verArchivados ? "" : "?archivados=1"}`} className="btn btn-ghost">{verArchivados ? "Ver activos" : "Ver archivados"}</Link>
         </div>
       </div>
+
+      <section aria-labelledby="pagos" className="space-y-5">
+        <div className="grid gap-5 lg:grid-cols-[1fr_1.5fr]">
+          <Kpi tono="marca" etiqueta="Pagado hasta hoy" valor={eur(totalPagado)}
+            nota={pagados.length ? `${pagados.length} pago${pagados.length > 1 ? "s" : ""} realizado${pagados.length > 1 ? "s" : ""}. Último: ${fecha(pagados[0].pagado_at)}` : "Todavía no se le ha pagado ningún cliente"} />
+          <div className="tarjeta p-5 sm:p-6">
+            <p className="eyebrow">Pagos</p>
+            <h2 id="pagos" className="mb-3 text-2xl font-bold">Pagado mes a mes</h2>
+            {pagados.length === 0
+              ? <p className="rounded-xl bg-soft p-6 text-center text-sm text-muted">Cuando marques un cliente como pagado, aparecerá aquí.</p>
+              : <Barras titulo="Importe pagado a este colaborador por mes" meses={meses.map((m) => m.etiqueta)} series={[{ nombre: "Pagado", color: "#0EA394", valores: porMes }]} formato={eur0} />}
+          </div>
+        </div>
+        <KpiFila items={[
+          { tono: "sun", etiqueta: "Pendiente de pagar", valor: eur(suma(porPagar)), nota: `${porPagar.length} cliente${porPagar.length === 1 ? "" : "s"} con CAE expedido · ${solicitados.length} con pago solicitado` },
+          { tono: "net", etiqueta: "En tramitación", valor: eur(suma(enTramitacion)), nota: `${enTramitacion.length} cliente${enTramitacion.length === 1 ? "" : "s"} sin CAE expedido` },
+        ]} />
+        {pagados.length > 0 && (
+          <details className="tarjeta group p-5 sm:p-6">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+              <span className="text-lg font-bold">Detalle de pagos <span className="text-sm font-normal text-muted">({pagados.length})</span></span>
+              <span aria-hidden className="text-xl leading-none text-muted transition-transform group-open:rotate-45">+</span>
+            </summary>
+            <div className="mt-3 max-h-96 overflow-auto">
+              <table className="w-full min-w-[34rem] text-left text-sm">
+                <thead className="sticky top-0 bg-panel text-xs text-muted">
+                  <tr><th className="pb-2 font-semibold">Fecha de pago</th><th className="pb-2 font-semibold">Cliente</th><th className="pb-2 text-right font-semibold">MWh</th><th className="pb-2 text-right font-semibold">% colaborador</th><th className="pb-2 text-right font-semibold">Importe</th></tr>
+                </thead>
+                <tbody className="divide-y divide-line border-t border-line">
+                  {pagados.map((c) => (
+                    <tr key={c.id}>
+                      <td className="py-2.5">{fecha(c.pagado_at)}</td>
+                      <td className="py-2.5 font-semibold">{c.nombre}</td>
+                      <td className="py-2.5 text-right font-mono tabular-nums">{num(c.mwh)}</td>
+                      <td className="py-2.5 text-right font-mono tabular-nums">{num(c.pct)} %</td>
+                      <td className="py-2.5 text-right font-mono font-bold tabular-nums">{eur(comision(c))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="border-t-2 border-line"><tr><td colSpan={4} className="pt-3 font-bold">Total pagado</td><td className="pt-3 text-right font-mono font-bold tabular-nums">{eur(totalPagado)}</td></tr></tfoot>
+              </table>
+            </div>
+          </details>
+        )}
+      </section>
 
       {esAdmin && (
         <details className="tarjeta group p-5">
