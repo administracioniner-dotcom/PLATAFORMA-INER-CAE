@@ -18,11 +18,12 @@ Next.js 15 + Tailwind + Supabase (proyecto `portal-colaboradores-cae`, Frankfurt
    - *Reset password*: `<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/crear-contrasena">Crear contraseña nueva</a>`
 4. **Authentication → SMTP Settings:** SMTP propio (p. ej. Resend) para enviar desde el dominio de INER.
 
-## Primer acceso de los administradores
-`laura.garcia@iner.es` y `jose.gutierrez@iner.es` ya están autorizados en la base de datos.
-Como aún no tienen cuenta, créalas desde Supabase → Authentication → Users → *Invite user*
-(o pulsa "Recuperar contraseña" en `/recuperar`, que solo funciona si la cuenta existe).
-Después entran por `/equipo/login` y desde `/equipo/invitar` invitan al resto.
+## Cuentas
+No se usa el correo para dar de alta ni para recuperar contraseñas:
+- Un administrador crea cada cuenta en `/equipo/invitar` ("Crear colaborador") con correo, contraseña y rol, y se la entrega a la persona.
+- Si alguien olvida la contraseña, el administrador la cambia desde esa misma pantalla (lista "Cuentas") o desde la ficha del colaborador.
+- Primer administrador: `jose.gutierrez@iner.es` ya tiene cuenta. Para `laura.garcia@iner.es`, créala desde "Crear colaborador" con rol Administrador.
+- Las rutas `/recuperar`, `/crear-contrasena` y `/auth/confirm` siguen en el código por si se activa más adelante el envío de correos (requiere SMTP propio, ver arriba), pero no se enlazan desde la interfaz.
 
 ## Rutas
 - Colaborador: `/login`, `/` (mis clientes, solo lectura y solicitar pago), `/mensajes`

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { iniciarSesion } from "@/app/actions";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
@@ -36,7 +35,7 @@ export function LoginForm({ equipo = false }: { equipo?: boolean }) {
             <input id="password" name="password" type="password" autoComplete="current-password" required className="input" />
           </div>
           <Submit className="btn-primary w-full !py-3" pendiente="Entrando…">Entrar</Submit>
-          <p className="text-sm"><Link href="/recuperar" className="font-semibold text-net-700 underline underline-offset-2">He olvidado mi contraseña</Link></p>
+          <p className="text-sm text-muted">¿No recuerdas tu contraseña? Pídesela a tu contacto en INER.</p>
         </FormEstado>
       </section>
     </main>

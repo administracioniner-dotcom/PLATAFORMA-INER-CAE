@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { crearCuenta, invitar } from "@/app/actions";
+import { crearCuenta, restablecerContrasena } from "@/app/actions";
 import { CampoContrasena } from "@/components/CampoContrasena";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
@@ -20,7 +20,7 @@ export default async function Invitar() {
       <div className="h-fit space-y-6">
         <FormEstado action={crearCuenta} className="space-y-4 tarjeta p-6">
           <h1 className="text-2xl font-bold tracking-[-0.02em]">Crear colaborador</h1>
-          <p className="text-sm text-muted">Creas el correo y la contraseña aquí mismo. La persona entra directamente, sin esperar ningún correo.</p>
+          <p className="text-sm text-muted">Pones tú el correo y la contraseña. La persona entra directamente con ellos, sin esperar ningún correo.</p>
           <div><label className="label" htmlFor="c-nombre">Nombre</label><input id="c-nombre" name="nombre" className="input" /></div>
           <div><label className="label" htmlFor="c-email">Correo</label><input id="c-email" name="email" type="email" required className="input" /></div>
           <CampoContrasena />
@@ -29,25 +29,25 @@ export default async function Invitar() {
           </div>
           <Submit className="btn-primary w-full" pendiente="Creando…">Crear cuenta</Submit>
         </FormEstado>
-        <FormEstado action={invitar} className="space-y-4 tarjeta p-6">
-          <h2 className="text-lg font-bold">Invitar por correo</h2>
-          <p className="text-sm text-muted">Alternativa: le llega un enlace para que elija su propia contraseña.</p>
-          <div><label className="label" htmlFor="nombre">Nombre</label><input id="nombre" name="nombre" className="input" /></div>
-          <div><label className="label" htmlFor="email">Correo</label><input id="email" name="email" type="email" required className="input" /></div>
-          <div><label className="label" htmlFor="rol">Rol</label>
-            <select id="rol" name="rol" className="input" defaultValue="colaborador">{Object.entries(ROLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-          </div>
-          <Submit className="btn-primary w-full" pendiente="Enviando…">Enviar invitación</Submit>
-        </FormEstado>
       </div>
       <div className="space-y-6">
         <section>
           <h2 className="mb-3 text-lg font-bold">Cuentas</h2>
           <ul className="divide-y divide-line tarjeta">
             {(personas ?? []).map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
-                <span><span className="font-semibold">{p.nombre ?? p.email}</span> <span className="text-muted">{p.email}</span></span>
-                <span className="text-muted">{ROLES[p.rol]} · {p.estado === "activo" ? "Activo" : "Aún no ha entrado"}</span>
+              <li key={p.id} className="px-4 py-3 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span><span className="font-semibold">{p.nombre ?? p.email}</span> <span className="text-muted">{p.email}</span></span>
+                  <span className="text-muted">{ROLES[p.rol]} · {p.estado === "activo" ? "Activo" : "Aún no ha entrado"}</span>
+                </div>
+                <details className="mt-2">
+                  <summary className="w-fit cursor-pointer text-xs font-semibold text-net-700 underline underline-offset-2">Cambiar contraseña</summary>
+                  <FormEstado action={restablecerContrasena} className="mt-3 max-w-md space-y-3">
+                    <input type="hidden" name="colaborador_id" value={p.id} />
+                    <CampoContrasena id={`pw-${p.id}`} />
+                    <Submit className="btn-primary !py-1.5" pendiente="Guardando…">Guardar contraseña</Submit>
+                  </FormEstado>
+                </details>
               </li>
             ))}
           </ul>
