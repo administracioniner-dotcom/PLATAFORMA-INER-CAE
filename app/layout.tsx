@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Titillium_Web, JetBrains_Mono } from "next/font/google";
+import { Toaster } from "@/components/Toaster";
 import "./globals.css";
 
 const titillium = Titillium_Web({ subsets: ["latin"], weight: ["300", "400", "600", "700", "900"], variable: "--font-titillium" });
@@ -9,7 +10,7 @@ export const metadata: Metadata = { title: "Portal de colaboradores · INER", de
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" className={`${titillium.variable} ${mono.variable}`}>
-      <body className="font-sans min-h-screen">{children}</body>
+      <body className="font-sans min-h-screen">{children}<Toaster /></body>
     </html>
   );
 }

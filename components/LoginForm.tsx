@@ -1,6 +1,7 @@
 import { iniciarSesion } from "@/app/actions";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
+import { EscenaSolar } from "@/components/Ilustraciones";
 import { Marca } from "@/components/Marca";
 
 export function LoginForm({ equipo = false }: { equipo?: boolean }) {
@@ -8,7 +9,7 @@ export function LoginForm({ equipo = false }: { equipo?: boolean }) {
     <main className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
       <section className="relative flex flex-col justify-between overflow-hidden bg-brand p-8 text-white lg:p-14">
         <Marca claro className="h-12 self-start" />
-        <div className="my-14 max-w-lg">
+        <div className="my-10 max-w-lg">
           <h1 className="text-4xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-5xl">
             {equipo ? "Panel del equipo INER" : "Tus clientes y tus comisiones, en un solo sitio"}
           </h1>
@@ -16,7 +17,10 @@ export function LoginForm({ equipo = false }: { equipo?: boolean }) {
             {equipo ? "Gestiona colaboradores, fases de los CAE y pagos." : "Mira en qué fase está cada cliente que nos has pasado y cuánto te corresponde cobrar."}
           </p>
         </div>
-        <p className="text-sm text-white/90">Acceso solo con cuenta creada por INER.</p>
+        <div className="relative z-10 flex items-end justify-between gap-6">
+          <p className="text-sm text-white/90">Acceso solo con cuenta creada por INER.</p>
+          <span className="hidden text-white/80 sm:block"><EscenaSolar className="w-72 xl:w-80" /></span>
+        </div>
         <span aria-hidden className="pointer-events-none absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-white/10" />
         <span aria-hidden className="pointer-events-none absolute -top-24 right-20 h-56 w-56 rounded-full bg-white/10" />
       </section>

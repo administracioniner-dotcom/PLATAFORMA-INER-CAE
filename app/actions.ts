@@ -55,10 +55,12 @@ export async function guardarContrasena(_: Estado, fd: FormData): Promise<Estado
 }
 
 /* ---------- Colaborador ---------- */
-export async function solicitarPago(fd: FormData) {
+export async function solicitarPago(fd: FormData): Promise<Estado> {
   const supabase = await createClient();
-  await supabase.rpc("solicitar_pago", { p_cliente: String(fd.get("id")) });
+  const { error } = await supabase.rpc("solicitar_pago", { p_cliente: String(fd.get("id")) });
+  if (error) return { error: "No se pudo solicitar el pago de este cliente." };
   revalidatePath("/");
+  return { ok: "Pago solicitado. INER lo revisará." };
 }
 
 /* ---------- Mensajes (colaborador y equipo) ---------- */
@@ -100,46 +102,58 @@ export async function crearCliente(_: Estado, fd: FormData): Promise<Estado> {
   return { ok: "Cliente añadido." };
 }
 
-export async function moverFase(fd: FormData) {
+export async function moverFase(fd: FormData): Promise<Estado> {
   const { supabase } = await soloStaff();
   const id = String(fd.get("id"));
   const delta = Number(fd.get("delta"));
   const { data } = await supabase.from("clientes").select("fase,colaborador_id").eq("id", id).single();
-  if (!data) return;
+  if (!data) return { error: "No se encontró el cliente." };
   const nueva = Math.min(4, Math.max(0, data.fase + delta));
-  if (nueva !== data.fase) await supabase.from("clientes").update({ fase: nueva }).eq("id", id);
+  if (nueva !== data.fase) {
+    const { error } = await supabase.from("clientes").update({ fase: nueva }).eq("id", id);
+    if (error) return { error: "No se pudo cambiar la fase." };
+  }
   revalidatePath(`/equipo/colaboradores/${data.colaborador_id}`);
+  return { ok: "Fase actualizada" };
 }
 
-export async function guardarMwh(fd: FormData) {
+export async function guardarMwh(fd: FormData): Promise<Estado> {
   const { supabase } = await soloStaff();
   const id = String(fd.get("id"));
   const v = String(fd.get("mwh") ?? "").replace(",", ".").trim();
   const mwh = v === "" ? null : Number(v);
-  if (mwh !== null && (Number.isNaN(mwh) || mwh < 0)) return;
-  const { data } = await supabase.from("clientes").update({ mwh }).eq("id", id).select("colaborador_id").single();
-  if (data) revalidatePath(`/equipo/colaboradores/${data.colaborador_id}`);
+  if (mwh !== null && (Number.isNaN(mwh) || mwh < 0)) return { error: "Los MWh deben ser un número igual o mayor que 0." };
+  const { data, error } = await supabase.from("clientes").update({ mwh }).eq("id", id).select("colaborador_id").single();
+  if (error || !data) return { error: "No se pudieron guardar los MWh." };
+  revalidatePath(`/equipo/colaboradores/${data.colaborador_id}`);
+  return { ok: "MWh guardados" };
 }
 
-export async function guardarPct(fd: FormData) {
+export async function guardarPct(fd: FormData): Promise<Estado> {
   const { supabase } = await soloStaff();
   const id = String(fd.get("id"));
   const pct = Number(String(fd.get("pct")).replace(",", "."));
-  if (Number.isNaN(pct) || pct < 0 || pct > 100) return;
-  const { data } = await supabase.from("clientes").update({ pct }).eq("id", id).select("colaborador_id").single();
-  if (data) revalidatePath(`/equipo/colaboradores/${data.colaborador_id}`);
+  if (Number.isNaN(pct) || pct < 0 || pct > 100) return { error: "El porcentaje debe estar entre 0 y 100." };
+  const { data, error } = await supabase.from("clientes").update({ pct }).eq("id", id).select("colaborador_id").single();
+  if (error || !data) return { error: "No se pudo guardar el porcentaje." };
+  revalidatePath(`/equipo/colaboradores/${data.colaborador_id}`);
+  return { ok: "Porcentaje guardado" };
 }
 
-export async function marcarPagado(fd: FormData) {
+export async function marcarPagado(fd: FormData): Promise<Estado> {
   const { supabase } = await soloStaff();
-  const { data } = await supabase.from("clientes").update({ pago: "paid" }).eq("id", String(fd.get("id"))).select("colaborador_id").single();
-  if (data) revalidatePath(`/equipo/colaboradores/${data.colaborador_id}`);
+  const { data, error } = await supabase.from("clientes").update({ pago: "paid" }).eq("id", String(fd.get("id"))).select("colaborador_id").single();
+  if (error || !data) return { error: "No se pudo marcar como pagado." };
+  revalidatePath(`/equipo/colaboradores/${data.colaborador_id}`);
+  return { ok: "Marcado como pagado" };
 }
 
-export async function sacarDelArchivo(fd: FormData) {
+export async function sacarDelArchivo(fd: FormData): Promise<Estado> {
   const { supabase } = await soloStaff();
-  const { data } = await supabase.from("clientes").update({ sacado_de_archivo: true }).eq("id", String(fd.get("id"))).select("colaborador_id").single();
-  if (data) revalidatePath(`/equipo/colaboradores/${data.colaborador_id}`);
+  const { data, error } = await supabase.from("clientes").update({ sacado_de_archivo: true }).eq("id", String(fd.get("id"))).select("colaborador_id").single();
+  if (error || !data) return { error: "No se pudo sacar del archivo." };
+  revalidatePath(`/equipo/colaboradores/${data.colaborador_id}`);
+  return { ok: "Cliente fuera del archivo" };
 }
 
 /* ---------- Admin ---------- */
@@ -197,4 +211,32 @@ export async function invitar(_: Estado, fd: FormData): Promise<Estado> {
   if (e2) return { error: `Invitación registrada, pero el correo no salió: ${e2.message}` };
   revalidatePath("/equipo/invitar");
   return { ok: `Invitación enviada a ${email}.` };
+}
+
+/* ---------- Perfil (cualquier cuenta) ---------- */
+export async function guardarNombre(_: Estado, fd: FormData): Promise<Estado> {
+  const { supabase, user } = await getSessionProfile();
+  if (!user) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
+  const nombre = String(fd.get("nombre") ?? "").trim();
+  if (!nombre) return { error: "Escribe tu nombre." };
+  const { error } = await supabase.from("profiles").update({ nombre }).eq("id", user.id);
+  if (error) return { error: "No se pudo guardar el nombre." };
+  revalidatePath("/", "layout");
+  return { ok: "Nombre guardado" };
+}
+
+export async function cambiarMiContrasena(_: Estado, fd: FormData): Promise<Estado> {
+  const { supabase, user } = await getSessionProfile();
+  if (!user?.email) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
+  const actual = String(fd.get("actual") ?? "");
+  const p1 = String(fd.get("password") ?? "");
+  const p2 = String(fd.get("password2") ?? "");
+  if (!actual) return { error: "Escribe tu contraseña actual." };
+  if (p1.length < 10) return { error: "La contraseña nueva debe tener al menos 10 caracteres." };
+  if (p1 !== p2) return { error: "Las dos contraseñas nuevas no coinciden." };
+  const { error: e1 } = await supabase.auth.signInWithPassword({ email: user.email, password: actual });
+  if (e1) return { error: "La contraseña actual no es correcta." };
+  const { error: e2 } = await supabase.auth.updateUser({ password: p1 });
+  if (e2) return { error: "No se pudo cambiar la contraseña. Prueba con otra." };
+  return { ok: "Contraseña cambiada" };
 }

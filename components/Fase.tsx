@@ -4,7 +4,7 @@ import { FASES, FASE_COLOR, cx } from "@/lib/utils";
 export function Fase({ fase }: { fase: number }) {
   const hecho = fase === 4;
   return (
-    <span className={cx("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold", hecho ? "bg-batt-50 text-batt-700" : "bg-sun-50 text-sun-700")}>
+    <span className={cx("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold", hecho ? "bg-batt-50 text-batt-700" : "bg-net-50 text-net-700")}>
       <span className="h-1.5 w-1.5 rounded-full" style={{ background: FASE_COLOR[fase] }} />{FASES[fase]}
     </span>
   );

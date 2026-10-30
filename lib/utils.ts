@@ -17,3 +17,12 @@ export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Bool
 export const FASE_COLOR = ["#EA5409", "#EE6A0A", "#F2820A", "#F69A0A", "#0EA394"] as const;
 export const iniciales = (n: string) => n.split(/[\s@.·]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 export const primerNombre = (n: string) => n.split(/[\s@]/)[0];
+
+/** Últimos `n` meses (el actual incluido) con su clave AAAA-MM y su etiqueta corta. */
+export function ultimosMeses(n = 6, hoy = new Date()) {
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth() - (n - 1 - i), 1));
+    return { clave: d.toISOString().slice(0, 7), etiqueta: new Intl.DateTimeFormat("es-ES", { month: "short", timeZone: "UTC" }).format(d).replace(".", "") };
+  });
+}
+export const claveMes = (iso: string | null) => (iso ? iso.slice(0, 7) : "");

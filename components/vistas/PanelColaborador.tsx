@@ -1,28 +1,25 @@
 import Link from "next/link";
-import { solicitarPago } from "@/app/actions";
 import { Avatar } from "@/components/Avatar";
-import { Embudo, Kpi, Recorrido } from "@/components/Fase";
-import { Submit } from "@/components/Submit";
-import { eur, eur0, fecha, num, primerNombre } from "@/lib/utils";
+import { Embudo, Kpi } from "@/components/Fase";
+import { Barras } from "@/components/Graficos";
+import { Vacio } from "@/components/Ilustraciones";
+import { TablaClientes } from "@/components/vistas/TablaClientes";
+import { claveMes, eur0, primerNombre, ultimosMeses } from "@/lib/utils";
 import type { ClienteColab } from "@/lib/types";
-
-function Cobro({ c }: { c: ClienteColab }) {
-  if (c.pago === "paid") return <span className="inline-block rounded-full bg-batt-50 px-3 py-1 text-xs font-bold text-batt-700">Pagado · {fecha(c.pagado_at)}</span>;
-  if (c.pago === "requested") return <span className="inline-block rounded-full bg-net-50 px-3 py-1 text-xs font-bold text-net-700">Pago solicitado</span>;
-  if (c.fase === 4) return <form action={solicitarPago}><input type="hidden" name="id" value={c.id} /><Submit className="btn-primary !py-1.5" pendiente="Solicitando…">Solicitar pago</Submit></form>;
-  return <span className="text-xs text-muted">Podrás solicitarlo cuando se expida el CAE</span>;
-}
 
 export function PanelColaborador({ nombre, clientes, verArchivados }: { nombre: string; clientes: ClienteColab[]; verArchivados: boolean }) {
   const activos = clientes.filter((c) => !c.archivado_at);
   const nArchivados = clientes.length - activos.length;
   const lista = verArchivados ? clientes.filter((c) => c.archivado_at) : activos;
   const suma = (cs: ClienteColab[]) => cs.reduce((a, c) => a + (c.comision ?? 0), 0);
-  const cobrado = suma(clientes.filter((c) => c.pago === "paid"));
+  const pagados = clientes.filter((c) => c.pago === "paid");
+  const cobrado = suma(pagados);
   const pendiente = suma(clientes.filter((c) => c.fase === 4 && c.pago !== "paid"));
   const tramitacion = suma(clientes.filter((c) => c.fase < 4));
   const listos = clientes.filter((c) => c.fase === 4 && c.pago === "none").length;
   const conteos = [0, 1, 2, 3, 4].map((f) => activos.filter((c) => c.fase === f).length);
+  const meses = ultimosMeses(6);
+  const porMes = meses.map((m) => suma(pagados.filter((c) => claveMes(c.pagado_at) === m.clave)));
 
   return (
     <div className="space-y-5">
@@ -52,6 +49,14 @@ export function PanelColaborador({ nombre, clientes, verArchivados }: { nombre: 
         <Kpi tono="net" etiqueta="En tramitación" valor={eur0(tramitacion)} nota="Aún sin CAE expedido" />
       </section>
 
+      <section className="tarjeta p-5 sm:p-6">
+        <h2 className="mb-1 text-xl font-bold">Lo que has cobrado, mes a mes</h2>
+        <p className="mb-4 text-sm text-muted">Últimos seis meses, según la fecha en que INER marcó cada pago.</p>
+        {pagados.length === 0
+          ? <Vacio icono="bateria" tono="batt" titulo="Aún no hay cobros" texto="Cuando INER marque como pagado el primer cliente, verás aquí tu evolución." />
+          : <Barras titulo="Comisión cobrada por mes" meses={meses.map((m) => m.etiqueta)} series={[{ nombre: "Cobrado", color: "#0EA394", valores: porMes }]} formato={eur0} />}
+      </section>
+
       <section id="clientes" className="tarjeta scroll-mt-24 p-5 sm:p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-bold">{verArchivados ? "Clientes archivados" : "Tus clientes"}</h2>
@@ -59,46 +64,9 @@ export function PanelColaborador({ nombre, clientes, verArchivados }: { nombre: 
             <Link href={verArchivados ? "/" : "/?archivados=1"} className="btn btn-ghost !py-1.5">{verArchivados ? "Volver a tus clientes" : `Ver archivados (${nArchivados})`}</Link>
           )}
         </div>
-        {lista.length === 0 ? (
-          <p className="rounded-xl bg-soft p-8 text-center text-muted">{verArchivados ? "No hay clientes archivados." : "Aún no tienes clientes. INER los dará de alta por ti."}</p>
-        ) : (
-          <>
-            <table className="hidden w-full text-left text-sm md:table">
-              <thead className="text-xs text-muted">
-                <tr>
-                  <th className="pb-3 font-semibold">Cliente</th><th className="pb-3 font-semibold">En qué fase está</th>
-                  <th className="pb-3 text-right font-semibold">MWh</th><th className="pb-3 text-right font-semibold">Tu %</th>
-                  <th className="pb-3 text-right font-semibold">Tu comisión</th><th className="pb-3 pl-8 font-semibold">Cobro</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line border-t border-line">
-                {lista.map((c) => (
-                  <tr key={c.id} className="transition-colors hover:bg-soft/60">
-                    <td className="py-4 pr-4"><span className="font-bold">{c.nombre}</span><span className="block text-xs text-muted">Alta {fecha(c.created_at)}</span></td>
-                    <td className="py-4 pr-4"><Recorrido fase={c.fase} /></td>
-                    <td className="py-4 text-right font-mono tabular-nums">{num(c.mwh)}</td>
-                    <td className="py-4 text-right font-mono tabular-nums">{num(c.pct)} %</td>
-                    <td className="py-4 text-right font-mono font-bold tabular-nums">{eur(c.comision)}</td>
-                    <td className="py-4 pl-8"><Cobro c={c} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <ul className="space-y-3 md:hidden">
-              {lista.map((c) => (
-                <li key={c.id} className="rounded-xl bg-soft p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div><p className="font-bold">{c.nombre}</p><p className="text-xs text-muted">Alta {fecha(c.created_at)}</p></div>
-                    <p className="num text-lg">{eur(c.comision)}</p>
-                  </div>
-                  <div className="mt-3"><Recorrido fase={c.fase} /></div>
-                  <p className="mt-2 font-mono text-xs text-muted">{num(c.mwh)} MWh · tu {num(c.pct)} %</p>
-                  <div className="mt-3"><Cobro c={c} /></div>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+        {lista.length === 0 && !verArchivados
+          ? <Vacio icono="sol" titulo="Aún no tienes clientes" texto="INER los dará de alta por ti. En cuanto aparezca el primero, podrás seguir su fase y tu comisión desde aquí." />
+          : <TablaClientes clientes={lista} vacio="No hay clientes archivados." />}
       </section>
 
       <section className="tarjeta flex flex-wrap items-center justify-between gap-4 p-5">
@@ -106,7 +74,10 @@ export function PanelColaborador({ nombre, clientes, verArchivados }: { nombre: 
           <p className="font-bold">¿Dudas con algún cliente o con un pago?</p>
           <p className="text-sm text-muted">Escribe a tu delegado comercial de INER y te responde por aquí.</p>
         </div>
-        <Link href="/mensajes" className="btn btn-primary">Escribir a INER</Link>
+        <div className="flex gap-2">
+          <Link href="/soporte" className="btn btn-ghost">Preguntas frecuentes</Link>
+          <Link href="/mensajes" className="btn btn-primary">Escribir a INER</Link>
+        </div>
       </section>
     </div>
   );

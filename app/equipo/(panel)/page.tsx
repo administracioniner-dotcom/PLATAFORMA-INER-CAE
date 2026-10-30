@@ -1,16 +1,20 @@
 import { ListaColaboradores, type FilaColab } from "@/components/vistas/ListaColaboradores";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { requireStaff } from "@/lib/auth";
-import { VALOR_MWH } from "@/lib/utils";
+import { VALOR_MWH, claveMes, ultimosMeses } from "@/lib/utils";
 import type { ClienteStaff, Profile } from "@/lib/types";
 
 export default async function Colaboradores({ searchParams }: { searchParams: Promise<{ q?: string; f?: string }> }) {
   const { q = "", f = "todos" } = await searchParams;
   const { supabase, profile } = await requireStaff();
-  const [{ data: ps }, { data: cs }] = await Promise.all([
+  const meses = ultimosMeses(6);
+  const desde = `${meses[0].clave}-01T00:00:00Z`;
+  const [{ data: ps }, { data: cs }, { data: log }] = await Promise.all([
     supabase.from("profiles").select("*").eq("rol", "colaborador").order("nombre"),
     supabase.from("clientes").select("*").is("archivado_at", null),
+    supabase.from("fase_log").select("fase_nueva,fecha").gte("fecha", desde),
   ]);
+  const avances = [0, 1, 2, 3, 4].map((f) => meses.map((m) => (log ?? []).filter((l) => l.fase_nueva === f && claveMes(l.fecha) === m.clave).length));
   const clientes = (cs ?? []) as ClienteStaff[];
   const comision = (c: ClienteStaff) => (c.mwh ?? 0) * VALOR_MWH * (c.pct / 100);
   const filas: FilaColab[] = ((ps ?? []) as Profile[]).map((p) => {
@@ -34,7 +38,7 @@ export default async function Colaboradores({ searchParams }: { searchParams: Pr
   return (
     <>
       <AutoRefresh cada={30} />
-      <ListaColaboradores filas={filas} tot={tot} conteos={conteos} q={q} f={f} esAdmin={profile.rol === "admin"} />
+      <ListaColaboradores filas={filas} tot={tot} conteos={conteos} q={q} f={f} esAdmin={profile.rol === "admin"} meses={meses.map((m) => m.etiqueta)} avances={avances} />
     </>
   );
 }

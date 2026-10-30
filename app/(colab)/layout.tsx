@@ -7,7 +7,7 @@ export default async function ColabLayout({ children }: { children: React.ReactN
     .eq("colaborador_id", user!.id).eq("leido", false).neq("remitente", "colaborador");
   return (
     <>
-      <Cabecera nombre={profile.nombre ?? profile.email} rol="Colaborador" enlaces={[{ href: "/", texto: "Panel" }, { href: "/mensajes", texto: "Mensajes", badge: count ?? 0 }]} />
+      <Cabecera nombre={profile.nombre ?? profile.email} rol="Colaborador" enlaces={[{ href: "/", texto: "Panel" }, { href: "/mensajes", texto: "Mensajes", badge: count ?? 0 }, { href: "/perfil", texto: "Mi perfil" }, { href: "/soporte", texto: "Soporte" }]} />
       <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
     </>
   );

@@ -27,3 +27,6 @@ body { @apply bg-bg text-ink antialiased; }
 .latido { animation: latido 2s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+@keyframes subir { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.barra { transform-box: fill-box; transform-origin: bottom; animation: subir .8s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 70ms); }

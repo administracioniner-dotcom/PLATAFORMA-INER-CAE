@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { Embudo, Kpi } from "@/components/Fase";
-import { cx, eur, eur0 } from "@/lib/utils";
+import { Barras } from "@/components/Graficos";
+import { Vacio } from "@/components/Ilustraciones";
+import { FASES, FASE_COLOR, cx, eur, eur0 } from "@/lib/utils";
 import type { Profile } from "@/lib/types";
 
 export type FilaColab = { p: Profile; n: number; pendientes: number; porCobrar: number; valor: number; porFase: number[] };
 
 const FILTROS = [["todos", "Todos"], ["pendientes", "Con pagos solicitados"], ["invitados", "Aún no han entrado"]] as const;
 
-export function ListaColaboradores({ filas, tot, conteos, q, f, esAdmin }: {
+export function ListaColaboradores({ filas, tot, conteos, q, f, esAdmin, meses, avances }: {
   filas: FilaColab[]; tot: { n: number; pend: number; valor: number; porCobrar: number }; conteos: number[]; q: string; f: string; esAdmin: boolean;
+  meses: string[]; avances: number[][];
 }) {
   return (
     <div className="space-y-5">
@@ -18,7 +21,10 @@ export function ListaColaboradores({ filas, tot, conteos, q, f, esAdmin }: {
           <h1 className="text-3xl font-bold tracking-[-0.02em]">Colaboradores</h1>
           <p className="text-muted">Clientes en curso y pagos de toda la red.</p>
         </div>
-        {esAdmin && <Link href="/equipo/invitar" className="btn btn-primary">Crear colaborador</Link>}
+        <div className="flex gap-2">
+          <a href="/equipo/exportar" className="btn btn-ghost">Exportar a Excel</a>
+          {esAdmin && <Link href="/equipo/invitar" className="btn btn-primary">Crear colaborador</Link>}
+        </div>
       </div>
 
       <section className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
@@ -36,6 +42,14 @@ export function ListaColaboradores({ filas, tot, conteos, q, f, esAdmin }: {
         <Kpi tono="net" etiqueta="Valor CAE en curso" valor={eur0(tot.valor)} />
       </dl>
 
+      <section className="tarjeta p-5 sm:p-6">
+        <h2 className="mb-1 text-xl font-bold">Avances de fase, mes a mes</h2>
+        <p className="mb-4 text-sm text-muted">Cuántos clientes han pasado a cada fase en los últimos seis meses.</p>
+        {avances.every((a) => a.every((n) => n === 0))
+          ? <Vacio icono="red" tono="net" titulo="Aún no hay avances" texto="Cuando muevas clientes de fase en el tablero, verás aquí el ritmo de la cartera." />
+          : <Barras entero titulo="Clientes que pasan a cada fase por mes" meses={meses} series={FASES.map((nombre, i) => ({ nombre, color: FASE_COLOR[i], valores: avances[i] }))} />}
+      </section>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filtro">
           {FILTROS.map(([k, t]) => (
@@ -52,7 +66,7 @@ export function ListaColaboradores({ filas, tot, conteos, q, f, esAdmin }: {
       </div>
 
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filas.length === 0 && <li className="tarjeta col-span-full p-10 text-center text-muted">No hay colaboradores con este filtro.</li>}
+        {filas.length === 0 && <li className="col-span-full"><Vacio icono="sol" titulo="No hay colaboradores aquí" texto={f === "todos" && !q ? "Crea el primero desde «Crear colaborador» y aparecerá en esta lista." : "Ninguno cumple este filtro o esta búsqueda."} /></li>}
         {filas.map((r) => (
           <li key={r.p.id} className="flex min-w-0">
             <Link href={`/equipo/colaboradores/${r.p.id}`} className="tarjeta block w-full min-w-0 p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-lift">

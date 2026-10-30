@@ -2,6 +2,7 @@ import Link from "next/link";
 import { crearCliente, guardarMwh, guardarPct, marcarPagado, moverFase, restablecerContrasena, sacarDelArchivo } from "@/app/actions";
 import { CampoContrasena } from "@/components/CampoContrasena";
 import { Avatar } from "@/components/Avatar";
+import { FormAviso } from "@/components/FormAviso";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
 import { FASES, FASE_COLOR, VALOR_MWH, eur, fecha } from "@/lib/utils";
@@ -29,7 +30,7 @@ export function TableroCliente({ col, clientes, verArchivados, esAdmin = false }
 
       {esAdmin && (
         <details className="tarjeta group p-5">
-          <summary className="cursor-pointer list-none font-bold">Cambiar contraseña de {col.nombre ?? col.email}<span className="ml-2 text-sm font-normal text-muted group-open:hidden">por si no le llega el correo</span></summary>
+          <summary className="cursor-pointer list-none font-bold">Cambiar contraseña de {col.nombre ?? col.email}<span className="ml-2 text-sm font-normal text-muted group-open:hidden">si la ha olvidado o quieres renovarla</span></summary>
           <FormEstado action={restablecerContrasena} className="mt-4 max-w-md space-y-4">
             <input type="hidden" name="colaborador_id" value={id} />
             <CampoContrasena />
@@ -56,7 +57,7 @@ export function TableroCliente({ col, clientes, verArchivados, esAdmin = false }
             <li key={c.id} className="tarjeta p-5">
               <p className="font-bold">{c.nombre}</p>
               <p className="text-sm text-muted">Pagado el {fecha(c.pagado_at)} · archivado el {fecha(c.archivado_at)}</p>
-              <form action={sacarDelArchivo} className="mt-3"><input type="hidden" name="id" value={c.id} /><button className="btn btn-ghost !py-1.5">Sacar del archivo</button></form>
+              <FormAviso action={sacarDelArchivo} className="mt-3"><input type="hidden" name="id" value={c.id} /><button className="btn btn-ghost !py-1.5">Sacar del archivo</button></FormAviso>
             </li>
           ))}
         </ul>
@@ -73,18 +74,18 @@ export function TableroCliente({ col, clientes, verArchivados, esAdmin = false }
                 <ul className="space-y-3">
                   {enFase.length === 0 && <li className="rounded-xl border border-dashed border-line p-4 text-center text-xs text-faint">Sin clientes</li>}
                   {enFase.map((c) => (
-                    <li key={c.id} className="rounded-xl bg-panel p-3.5 text-sm shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-lift" style={{ borderTop: `3px solid ${FASE_COLOR[fase]}` }}>
+                    <li key={c.id} className="rounded-xl bg-panel p-3.5 text-sm shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-lift" style={{ borderLeft: `4px solid ${FASE_COLOR[fase]}` }}>
                       <p className="font-bold leading-tight">{c.nombre}</p>
-                      <form action={guardarMwh} className="mt-3 flex items-end gap-1.5">
+                      <FormAviso action={guardarMwh} className="mt-3 flex items-end gap-1.5">
                         <input type="hidden" name="id" value={c.id} />
                         <div className="flex-1"><label className="text-xs text-muted" htmlFor={`mwh-${c.id}`}>MWh</label><input id={`mwh-${c.id}`} name="mwh" inputMode="decimal" defaultValue={c.mwh ?? ""} className="input !py-1.5 font-mono" /></div>
                         <button className="btn btn-ghost !px-2.5 !py-1.5">Guardar</button>
-                      </form>
-                      <form action={guardarPct} className="mt-2 flex items-end gap-1.5">
+                      </FormAviso>
+                      <FormAviso action={guardarPct} className="mt-2 flex items-end gap-1.5">
                         <input type="hidden" name="id" value={c.id} />
                         <div className="flex-1"><label className="text-xs text-muted" htmlFor={`pct-${c.id}`}>% del colaborador</label><input id={`pct-${c.id}`} name="pct" inputMode="decimal" defaultValue={c.pct} className="input !py-1.5 font-mono" /></div>
                         <button className="btn btn-ghost !px-2.5 !py-1.5">Guardar</button>
-                      </form>
+                      </FormAviso>
                       <dl className="mt-3 space-y-1 border-t border-line pt-2.5 text-xs text-muted">
                         <div className="flex justify-between gap-2"><dt>Valor</dt><dd className="font-mono tabular-nums">{eur((c.mwh ?? 0) * VALOR_MWH)}</dd></div>
                         <div className="flex items-baseline justify-between gap-2"><dt>Comisión</dt><dd className="num text-base text-ink">{eur((c.mwh ?? 0) * VALOR_MWH * c.pct / 100)}</dd></div>
@@ -92,11 +93,11 @@ export function TableroCliente({ col, clientes, verArchivados, esAdmin = false }
                       {c.pago === "requested" && <p className="mt-2 rounded-lg bg-sun-50 px-2.5 py-1.5 text-xs font-bold text-sun-700">Pago solicitado el {fecha(c.solicitado_at)}</p>}
                       {c.pago === "paid" && <p className="mt-2 rounded-lg bg-batt-50 px-2.5 py-1.5 text-xs font-bold text-batt-700">Pagado el {fecha(c.pagado_at)}</p>}
                       <div className="mt-3 flex items-center gap-1.5">
-                        <form action={moverFase}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="-1" /><button disabled={fase === 0} aria-label="Volver a la fase anterior" className="btn btn-ghost !px-3 !py-1.5">←</button></form>
-                        <form action={moverFase}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="1" /><button disabled={fase === 4} aria-label="Pasar a la fase siguiente" className="btn btn-ghost !px-3 !py-1.5">→</button></form>
+                        <FormAviso action={moverFase}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="-1" /><button disabled={fase === 0} aria-label="Volver a la fase anterior" className="btn btn-ghost !px-3 !py-1.5">←</button></FormAviso>
+                        <FormAviso action={moverFase}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="1" /><button disabled={fase === 4} aria-label="Pasar a la fase siguiente" className="btn btn-ghost !px-3 !py-1.5">→</button></FormAviso>
                       </div>
                       {fase === 4 && c.pago !== "paid" && (
-                        <form action={marcarPagado} className="mt-2"><input type="hidden" name="id" value={c.id} /><button className="btn btn-primary w-full !py-1.5">Marcar como pagado</button></form>
+                        <FormAviso action={marcarPagado} className="mt-2"><input type="hidden" name="id" value={c.id} /><button className="btn btn-primary w-full !py-1.5">Marcar como pagado</button></FormAviso>
                       )}
                     </li>
                   ))}
