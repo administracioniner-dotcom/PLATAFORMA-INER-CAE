@@ -16,7 +16,7 @@ export function Perfil({ nombre, email, rol, desde, datos }: {
           <h1 className="truncate text-3xl font-bold tracking-[-0.02em]">{nombre ?? email}</h1>
           <p className="text-muted">{email}</p>
           <p className="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
-            <span className="rounded-full bg-brand px-3 py-1 text-ink">{rol}</span>
+            <span className="rounded-full bg-ink px-3 py-1 text-white">{rol}</span>
             <span className="rounded-full bg-soft px-3 py-1 text-muted">Con INER desde {fecha(desde)}</span>
           </p>
         </div>

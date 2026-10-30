@@ -1,4 +1,5 @@
 import { Cabecera } from "@/components/Cabecera";
+import { Pie } from "@/components/Pie";
 import { requireStaff } from "@/lib/auth";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
@@ -14,6 +15,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     <>
       <Cabecera nombre={profile.nombre ?? profile.email} rol={profile.rol === "admin" ? "Administrador" : "Delegado"} enlaces={enlaces} />
       <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+      <Pie />
     </>
   );
 }

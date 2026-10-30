@@ -66,7 +66,7 @@ export function TableroCliente({ col, clientes, verArchivados, esAdmin = false }
           {FASES.map((nombreFase, fase) => {
             const enFase = lista.filter((c) => c.fase === fase);
             return (
-              <section key={nombreFase} aria-label={nombreFase} className="min-w-[17.5rem] snap-start rounded-2xl bg-soft p-3 lg:min-w-0">
+              <section key={nombreFase} aria-label={nombreFase} className="min-w-[17.5rem] snap-start rounded-[18px] bg-soft p-3 lg:min-w-0">
                 <h2 className="mb-3 flex items-center justify-between gap-2 px-1.5 text-sm font-bold">
                   <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ background: FASE_COLOR[fase] }} />{nombreFase}</span>
                   <span className="rounded-full bg-panel px-2.5 text-xs font-bold shadow-card">{enFase.length}</span>

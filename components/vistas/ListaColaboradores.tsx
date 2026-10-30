@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
-import { Embudo, Kpi } from "@/components/Fase";
+import { Embudo, Kpi, KpiFila } from "@/components/Fase";
 import { Barras } from "@/components/Graficos";
 import { Vacio } from "@/components/Ilustraciones";
 import { FASES, FASE_COLOR, cx, eur, eur0 } from "@/lib/utils";
@@ -18,12 +18,13 @@ export function ListaColaboradores({ filas, tot, conteos, q, f, esAdmin, meses, 
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
+          <p className="eyebrow !mb-0">Equipo INER</p>
           <h1 className="text-3xl font-bold tracking-[-0.02em]">Colaboradores</h1>
           <p className="text-muted">Clientes en curso y pagos de toda la red.</p>
         </div>
         <div className="flex gap-2">
           <a href="/equipo/exportar" className="btn btn-ghost">Exportar a Excel</a>
-          {esAdmin && <Link href="/equipo/invitar" className="btn btn-primary">Crear colaborador</Link>}
+          {esAdmin && <Link href="/equipo/invitar" className="btn btn-primary flecha">Crear colaborador</Link>}
         </div>
       </div>
 
@@ -36,14 +37,15 @@ export function ListaColaboradores({ filas, tot, conteos, q, f, esAdmin, meses, 
           nota={tot.pend > 0 ? `${tot.pend} pago${tot.pend > 1 ? "s" : ""} solicitado${tot.pend > 1 ? "s" : ""} por los colaboradores` : "Ningún pago solicitado ahora mismo"} />
       </section>
 
-      <dl className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <Kpi etiqueta="Clientes activos" valor={String(tot.n)} />
-        <Kpi tono="sun" etiqueta="Pagos solicitados" valor={String(tot.pend)} />
-        <Kpi tono="net" etiqueta="Valor CAE en curso" valor={eur0(tot.valor)} />
-      </dl>
+      <KpiFila items={[
+        { etiqueta: "Clientes activos", valor: String(tot.n) },
+        { tono: "sun", etiqueta: "Pagos solicitados", valor: String(tot.pend) },
+        { tono: "net", etiqueta: "Valor CAE en curso", valor: eur0(tot.valor) },
+      ]} />
 
       <section className="tarjeta p-5 sm:p-6">
-        <h2 className="mb-1 text-xl font-bold">Avances de fase, mes a mes</h2>
+        <p className="eyebrow">Evolución</p>
+        <h2 className="mb-1 text-2xl font-bold">Avances de fase, mes a mes</h2>
         <p className="mb-4 text-sm text-muted">Cuántos clientes han pasado a cada fase en los últimos seis meses.</p>
         {avances.every((a) => a.every((n) => n === 0))
           ? <Vacio icono="red" tono="net" titulo="Aún no hay avances" texto="Cuando muevas clientes de fase en el tablero, verás aquí el ritmo de la cartera." />
@@ -76,7 +78,7 @@ export function ListaColaboradores({ filas, tot, conteos, q, f, esAdmin, meses, 
                   <p className="truncate font-bold">{r.p.nombre ?? r.p.email}</p>
                   <p className="truncate text-xs text-muted">{r.p.email}</p>
                 </div>
-                {r.pendientes > 0 && <span className="latido shrink-0 rounded-full bg-sun px-2.5 py-0.5 text-xs font-bold text-white">{r.pendientes} pago{r.pendientes > 1 ? "s" : ""}</span>}
+                {r.pendientes > 0 && <span className="latido shrink-0 rounded-full bg-cta px-2.5 py-0.5 text-xs font-bold text-white">{r.pendientes} pago{r.pendientes > 1 ? "s" : ""}</span>}
               </div>
               {r.p.estado === "invitado" && <p className="mt-3 inline-block rounded-full bg-soft px-2.5 py-0.5 text-xs font-semibold text-muted">Aún no ha entrado</p>}
               <div className="mt-4"><Embudo conteos={r.porFase} compacto /></div>

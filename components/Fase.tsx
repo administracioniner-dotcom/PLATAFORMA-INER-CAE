@@ -15,7 +15,7 @@ export function Recorrido({ fase }: { fase: number }) {
   return (
     <div className="min-w-[8.5rem]" role="img" aria-label={`Fase ${fase + 1} de 5: ${FASES[fase]}`}>
       <div className="flex gap-1" aria-hidden>
-        {FASES.map((_, i) => <span key={i} className="h-1.5 flex-1 rounded-full" style={{ background: i <= fase ? FASE_COLOR[i] : "#E9E3DB" }} />)}
+        {FASES.map((_, i) => <span key={i} className="h-1.5 flex-1 rounded-full" style={{ background: i <= fase ? FASE_COLOR[i] : "#E5E7EB" }} />)}
       </div>
       <p className={cx("mt-1.5 text-xs font-semibold", fase === 4 ? "text-batt-700" : "text-ink")}>{FASES[fase]}</p>
     </div>
@@ -47,18 +47,33 @@ export function Embudo({ conteos, compacto = false }: { conteos: number[]; compa
   );
 }
 
-/** Tarjeta de indicador. `marca` usa el degradado de INER para destacar la cifra principal. */
+/** Tarjeta de indicador. `marca` la destaca en azul marino (cifra principal del panel). */
 export function Kpi({ etiqueta, valor, nota, tono = "ink", accion }: { etiqueta: string; valor: string; nota?: string; tono?: "ink" | "sun" | "batt" | "net" | "marca"; accion?: { href: string; texto: string } }) {
   const marca = tono === "marca";
   const color = { ink: "text-ink", sun: "text-sun-700", batt: "text-batt-700", net: "text-net-700", marca: "text-white" }[tono];
   return (
-    <div className={cx("flex flex-col rounded-2xl p-5 shadow-card", marca ? "justify-between bg-brand p-6 sm:p-8" : "bg-panel")}>
+    <div className={cx("flex flex-col rounded-[18px] p-5 shadow-card", marca ? "justify-between bg-ink p-6 sm:p-8" : "border border-line bg-panel")}>
       <div>
-        <p className={cx("etiqueta", marca && "!text-white")}>{etiqueta}</p>
+        <p className={cx("etiqueta", marca && "!text-white/75")}>{etiqueta}</p>
         <p className={cx("num mt-2 text-3xl", color, marca && "text-5xl sm:text-6xl")}>{valor}</p>
-        {nota && <p className={cx("mt-1", marca ? "mt-2 max-w-xs text-sm font-semibold text-white" : "text-xs text-muted")}>{nota}</p>}
+        {nota && <p className={cx("mt-1", marca ? "mt-3 max-w-xs text-sm text-white/85" : "text-xs text-muted")}>{nota}</p>}
       </div>
-      {accion && <a href={accion.href} className="btn btn-oscuro mt-6 self-start">{accion.texto}</a>}
+      {accion && <a href={accion.href} className="btn btn-primary flecha mt-6 self-start">{accion.texto}</a>}
     </div>
+  );
+}
+
+/** Franja de cifras separadas por líneas verticales, como en iner.es. */
+export function KpiFila({ items }: { items: { etiqueta: string; valor: string; nota?: string; tono?: "ink" | "sun" | "batt" | "net" }[] }) {
+  return (
+    <dl className="tarjeta grid grid-cols-1 divide-y divide-line sm:grid-flow-col sm:auto-cols-fr sm:divide-x sm:divide-y-0">
+      {items.map((k) => (
+        <div key={k.etiqueta} className="px-6 py-5">
+          <dt className="etiqueta">{k.etiqueta}</dt>
+          <dd className={cx("num mt-1 text-3xl", { ink: "text-ink", sun: "text-sun-700", batt: "text-batt-700", net: "text-net-700" }[k.tono ?? "ink"])}>{k.valor}</dd>
+          {k.nota && <p className="mt-0.5 text-xs text-muted">{k.nota}</p>}
+        </div>
+      ))}
+    </dl>
   );
 }

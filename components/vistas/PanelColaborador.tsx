@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
-import { Embudo, Kpi } from "@/components/Fase";
+import { Embudo, Kpi, KpiFila } from "@/components/Fase";
 import { Barras } from "@/components/Graficos";
 import { Vacio } from "@/components/Ilustraciones";
 import { TablaClientes } from "@/components/vistas/TablaClientes";
@@ -28,7 +28,8 @@ export function PanelColaborador({ nombre, clientes, verArchivados }: { nombre: 
           <div className="flex items-center gap-4">
             <Avatar nombre={nombre} tamano="lg" />
             <div className="min-w-0">
-              <h1 className="truncate text-3xl font-bold tracking-[-0.02em] sm:text-4xl">Hola, {primerNombre(nombre)}</h1>
+              <p className="eyebrow !mb-0">Panel del colaborador</p>
+              <h1 className="truncate text-3xl font-bold tracking-[-0.02em] sm:text-4xl">Hola, <span className="resalte">{primerNombre(nombre)}</span></h1>
               <p className="text-muted">Así van los clientes que nos has pasado.</p>
             </div>
           </div>
@@ -43,14 +44,15 @@ export function PanelColaborador({ nombre, clientes, verArchivados }: { nombre: 
           nota={listos > 0 ? `${listos} cliente${listos > 1 ? "s" : ""} con el CAE expedido: ya puedes solicitar el pago` : "Cuando se expida un CAE podrás solicitar el pago"} />
       </section>
 
-      <section className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <Kpi etiqueta="Clientes que nos has pasado" valor={String(clientes.length)} />
-        <Kpi tono="batt" etiqueta="Ya cobrado" valor={eur0(cobrado)} />
-        <Kpi tono="net" etiqueta="En tramitación" valor={eur0(tramitacion)} nota="Aún sin CAE expedido" />
-      </section>
+      <KpiFila items={[
+        { etiqueta: "Clientes que nos has pasado", valor: String(clientes.length) },
+        { tono: "batt", etiqueta: "Ya cobrado", valor: eur0(cobrado) },
+        { tono: "net", etiqueta: "En tramitación", valor: eur0(tramitacion), nota: "Aún sin CAE expedido" },
+      ]} />
 
       <section className="tarjeta p-5 sm:p-6">
-        <h2 className="mb-1 text-xl font-bold">Lo que has cobrado, mes a mes</h2>
+        <p className="eyebrow">Tus cobros</p>
+        <h2 className="mb-1 text-2xl font-bold">Lo que has cobrado, mes a mes</h2>
         <p className="mb-4 text-sm text-muted">Últimos seis meses, según la fecha en que INER marcó cada pago.</p>
         {pagados.length === 0
           ? <Vacio icono="bateria" tono="batt" titulo="Aún no hay cobros" texto="Cuando INER marque como pagado el primer cliente, verás aquí tu evolución." />
@@ -59,7 +61,10 @@ export function PanelColaborador({ nombre, clientes, verArchivados }: { nombre: 
 
       <section id="clientes" className="tarjeta scroll-mt-24 p-5 sm:p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-bold">{verArchivados ? "Clientes archivados" : "Tus clientes"}</h2>
+          <div>
+            <p className="eyebrow">Tu cartera</p>
+            <h2 className="text-2xl font-bold">{verArchivados ? "Clientes archivados" : "Tus clientes"}</h2>
+          </div>
           {(nArchivados > 0 || verArchivados) && (
             <Link href={verArchivados ? "/" : "/?archivados=1"} className="btn btn-ghost !py-1.5">{verArchivados ? "Volver a tus clientes" : `Ver archivados (${nArchivados})`}</Link>
           )}
@@ -76,7 +81,7 @@ export function PanelColaborador({ nombre, clientes, verArchivados }: { nombre: 
         </div>
         <div className="flex gap-2">
           <Link href="/soporte" className="btn btn-ghost">Preguntas frecuentes</Link>
-          <Link href="/mensajes" className="btn btn-primary">Escribir a INER</Link>
+          <Link href="/mensajes" className="btn btn-primary flecha">Escribir a INER</Link>
         </div>
       </section>
     </div>

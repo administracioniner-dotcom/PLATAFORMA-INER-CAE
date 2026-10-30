@@ -31,7 +31,7 @@ export default async function Mensajes({ searchParams }: { searchParams: Promise
             <Link key={h.clave} href={`/mensajes?hilo=${h.clave}`} className={cx("block border-b border-line px-4 py-3.5 transition-colors hover:bg-soft", h.clave === hilo && "bg-sun-50")}>
               <span className="flex items-center justify-between gap-2">
                 <span className="truncate font-bold">{h.titulo}</span>
-                {h.noLeidos > 0 && <span className="rounded-full bg-sun px-1.5 text-[11px] font-bold text-white">{h.noLeidos}</span>}
+                {h.noLeidos > 0 && <span className="rounded-full bg-cta px-1.5 text-[11px] font-bold text-white">{h.noLeidos}</span>}
               </span>
               <span className="block truncate text-xs text-muted">{h.ultimo.texto ?? "Escribe a INER"} {h.ultimo.texto ? "· " + fechaHora(h.ultimo.fecha) : ""}</span>
             </Link>

@@ -36,33 +36,6 @@ export function Red({ className = "h-24 w-24" }: { className?: string }) {
   );
 }
 
-/** Escena para el login: casa con paneles solares, sol y batería. */
-export function EscenaSolar({ className = "w-full max-w-md" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 420 300" className={className} aria-hidden {...base} strokeWidth={2.5}>
-      <circle cx="338" cy="64" r="26" />
-      {Array.from({ length: 10 }, (_, i) => {
-        const a = (i * Math.PI) / 5;
-        return <line key={i} x1={338 + Math.cos(a) * 38} y1={64 + Math.sin(a) * 38} x2={338 + Math.cos(a) * 54} y2={64 + Math.sin(a) * 54} />;
-      })}
-      <path d="M40 270 H380" />
-      <path d="M70 270 V150 L150 90 L230 150 V270" />
-      <rect x="120" y="200" width="42" height="70" rx="4" />
-      <path d="M100 138 L150 100 L200 138" opacity=".0" />
-      <g transform="rotate(-37 150 90)">
-        <rect x="104" y="86" width="92" height="30" rx="3" fill="currentColor" fillOpacity=".18" />
-        <path d="M135 86 V116 M165 86 V116 M104 101 H196" />
-      </g>
-      <rect x="262" y="206" width="76" height="64" rx="9" />
-      <rect x="338" y="224" width="9" height="26" rx="3" />
-      <rect x="272" y="216" width="14" height="44" rx="3" fill="currentColor" stroke="none" opacity=".9" />
-      <rect x="292" y="216" width="14" height="44" rx="3" fill="currentColor" stroke="none" opacity=".55" />
-      <rect x="312" y="216" width="14" height="44" rx="3" fill="currentColor" stroke="none" opacity=".25" />
-      <path d="M230 240 H262" strokeDasharray="2 7" />
-    </svg>
-  );
-}
-
 export function Vacio({ icono, titulo, texto, children, tono = "sun" }: {
   icono: "sol" | "bateria" | "red"; titulo: string; texto: string; children?: React.ReactNode; tono?: "sun" | "batt" | "net";
 }) {

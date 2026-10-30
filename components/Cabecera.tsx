@@ -21,7 +21,7 @@ export function Cabecera({ nombre, rol, enlaces }: { nombre: string; rol?: strin
             <Link key={e.href} href={e.href} aria-current={activo(e.href) ? "page" : undefined}
               className={cx("relative whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-colors", activo(e.href) ? "bg-ink text-white" : "text-muted hover:bg-soft hover:text-ink")}>
               {e.texto}
-              {!!e.badge && <span className="latido ml-2 rounded-full bg-sun px-1.5 py-0.5 text-[11px] font-bold text-white">{e.badge}</span>}
+              {!!e.badge && <span className="latido ml-2 rounded-full bg-cta px-1.5 py-0.5 text-[11px] font-bold text-white">{e.badge}</span>}
             </Link>
           ))}
         </nav>

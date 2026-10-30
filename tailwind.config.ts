@@ -4,7 +4,10 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: "#FBFAF8", panel: "#FFFFFF", soft: "#F6F4F1", ink: "#241F1A", muted: "#6B6459", faint: "#766E62", line: "#E9E3DB",
+        // Paleta tomada de iner.es: azul marino, naranja de marca y grises fríos muy claros.
+        bg: "#F9FAFB", panel: "#FFFFFF", soft: "#F3F4F6", ink: "#021037", navy2: "#101E45", muted: "#4A5565", faint: "#6B7280", line: "#E5E7EB",
+        marca: "#EA5409", // naranja de marca: solo para rellenos y detalles grandes
+        cta: { DEFAULT: "#C94607", dark: "#9A3309" }, // naranja de botones y textos pequeños (contraste AA con texto blanco)
         sun: { DEFAULT: "#F07D0A", 50: "#FEF3E6", 100: "#FDE3C7", 700: "#9A4E00" },
         batt: { DEFAULT: "#0EA394", 50: "#E4F6F3", 700: "#0A6B61" },
         net: { DEFAULT: "#2F6FE0", 50: "#E8F0FC", 700: "#1E4FA8" },

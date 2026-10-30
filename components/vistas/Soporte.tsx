@@ -22,16 +22,22 @@ export function SoporteVista() {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <header>
+        <p className="eyebrow !mb-0">Ayuda</p>
         <h1 className="text-3xl font-bold tracking-[-0.02em]">Soporte</h1>
         <p className="text-muted">Respuestas rápidas y cómo hablar con INER.</p>
       </header>
 
-      <section className="tarjeta flex flex-wrap items-center justify-between gap-4 p-5">
+      <section className="tarjeta flex flex-wrap items-center justify-between gap-5 p-6">
         <div>
-          <p className="font-bold">¿Prefieres escribirnos?</p>
-          <p className="text-sm text-muted">Tu delegado comercial te responde por Mensajes.</p>
+          <p className="eyebrow">Hablar con INER</p>
+          <p className="text-xl font-bold">Escríbenos o llámanos</p>
+          <p className="mt-1 text-sm text-muted">
+            <a href="tel:+34900848402" className="font-semibold text-ink underline-offset-2 hover:underline">+34 900 84 84 02</a> ·{" "}
+            <a href="mailto:info@iner.es" className="font-semibold text-ink underline-offset-2 hover:underline">info@iner.es</a>
+          </p>
+          <p className="text-sm text-muted">Parque Científico y Tecnológico de Albacete, Pase de la Innovación, 3.</p>
         </div>
-        <Link href="/mensajes" className="btn btn-primary">Escribir a INER</Link>
+        <Link href="/mensajes" className="btn btn-primary flecha">Escribir a mi delegado</Link>
       </section>
 
       <section className="tarjeta p-5 sm:p-6">

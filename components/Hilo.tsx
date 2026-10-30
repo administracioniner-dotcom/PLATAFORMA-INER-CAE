@@ -14,9 +14,9 @@ export function Hilo({ mensajes, colaboradorId, clienteId, yo }: {
           const mio = m.remitente === yo;
           const sistema = m.remitente === "sistema";
           return (
-            <li key={m.id} className={cx("max-w-[85%] rounded-2xl px-4 py-2.5 text-sm", sistema ? "mx-auto bg-sun-50 text-sun-700" : mio ? "ml-auto rounded-br-md bg-brand text-ink" : "rounded-bl-md bg-panel shadow-card")}>
+            <li key={m.id} className={cx("max-w-[85%] rounded-2xl px-4 py-2.5 text-sm", sistema ? "mx-auto bg-sun-50 text-sun-700" : mio ? "ml-auto rounded-br-md bg-ink text-white" : "rounded-bl-md border border-line bg-panel")}>
               <p className="whitespace-pre-wrap">{m.texto}</p>
-              <p className={cx("mt-1 text-[11px]", mio && !sistema ? "text-ink/70" : "text-muted")}>
+              <p className={cx("mt-1 text-[11px]", mio && !sistema ? "text-white/70" : "text-muted")}>
                 {sistema ? "Aviso automático" : m.remitente === "delegado" ? "INER" : "Colaborador"} · {fechaHora(m.fecha)}
               </p>
             </li>

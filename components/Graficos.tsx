@@ -47,8 +47,8 @@ function Dibujo({ meses, series, formato = (n) => String(n), titulo, entero = fa
         const y = T + alto - alto * g;
         return (
           <g key={g}>
-            <line x1={L} x2={W - R} y1={y} y2={y} stroke="#E9E3DB" strokeDasharray={g === 0 ? undefined : "3 4"} />
-            <text x={L - 8} y={y + 4} textAnchor="end" fontSize="11" fill="#6B6459">{formato(techo * g)}</text>
+            <line x1={L} x2={W - R} y1={y} y2={y} stroke="#E5E7EB" strokeDasharray={g === 0 ? undefined : "3 4"} />
+            <text x={L - 8} y={y + 4} textAnchor="end" fontSize="11" fill="#4A5565">{formato(techo * g)}</text>
           </g>
         );
       })}
@@ -69,7 +69,7 @@ function Dibujo({ meses, series, formato = (n) => String(n), titulo, entero = fa
                 </rect>
               );
             })}
-            <text x={cx} y={H - 8} textAnchor="middle" fontSize="12" fill="#6B6459">{m}</text>
+            <text x={cx} y={H - 8} textAnchor="middle" fontSize="12" fill="#4A5565">{m}</text>
           </g>
         );
       })}
