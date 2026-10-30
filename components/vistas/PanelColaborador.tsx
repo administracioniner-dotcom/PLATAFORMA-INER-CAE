@@ -14,7 +14,6 @@ export function PanelColaborador({ nombre, clientes, verArchivados }: { nombre: 
   const suma = (cs: ClienteColab[]) => cs.reduce((a, c) => a + (c.comision ?? 0), 0);
   const pagados = clientes.filter((c) => c.pago === "paid");
   const cobrado = suma(pagados);
-  const pendiente = suma(clientes.filter((c) => c.fase === 4 && c.pago !== "paid"));
   const tramitacion = suma(clientes.filter((c) => c.fase < 4));
   const listos = clientes.filter((c) => c.fase === 4 && c.pago === "none").length;
   const conteos = [0, 1, 2, 3, 4].map((f) => activos.filter((c) => c.fase === f).length);
@@ -40,13 +39,12 @@ export function PanelColaborador({ nombre, clientes, verArchivados }: { nombre: 
               : <Embudo conteos={conteos} />}
           </div>
         </div>
-        <Kpi tono="marca" etiqueta="Pendiente de cobro" valor={eur0(pendiente)} accion={listos > 0 ? { href: "#clientes", texto: "Ver clientes listos" } : undefined}
-          nota={listos > 0 ? `${listos} cliente${listos > 1 ? "s" : ""} con el CAE expedido: ya puedes solicitar el pago` : "Cuando se expida un CAE podrás solicitar el pago"} />
+        <Kpi tono="marca" etiqueta="Ya cobrado" valor={eur0(cobrado)} accion={listos > 0 ? { href: "#clientes", texto: "Ver clientes listos" } : undefined}
+          nota={listos > 0 ? `${listos} cliente${listos > 1 ? "s" : ""} con el CAE expedido: ya puedes solicitar el pago` : "Lo que INER te ha pagado hasta hoy"} />
       </section>
 
       <KpiFila items={[
         { etiqueta: "Clientes que nos has pasado", valor: String(clientes.length) },
-        { tono: "batt", etiqueta: "Ya cobrado", valor: eur0(cobrado) },
         { tono: "net", etiqueta: "En tramitación", valor: eur0(tramitacion), nota: "Aún sin CAE expedido" },
       ]} />
 
