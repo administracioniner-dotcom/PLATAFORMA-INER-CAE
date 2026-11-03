@@ -77,8 +77,9 @@ export function PanelColaborador({ nombre, clientes, verArchivados, sinLeer = 0,
 
   return (
     // En escritorio, el cuerpo ocupa el alto que queda (la tabla se desplaza dentro de su tarjeta); en pantallas bajas la página crece.
-    <div className="space-y-4 lg:grid lg:h-[calc(100dvh-5.75rem)] lg:min-h-[44rem] lg:grid-rows-[auto_auto_minmax(0,1fr)] lg:gap-4 lg:space-y-0">
-      <section className="entra relative grid items-center gap-x-6 gap-y-3 overflow-hidden rounded-[18px] bg-ink px-4 py-4 text-white shadow-card sm:px-6 lg:grid-cols-[1.3fr_1fr]" style={{ ["--i" as string]: 0 }}>
+    <div className="space-y-4 lg:grid lg:h-[calc(100dvh-5.75rem)] lg:min-h-[38rem] lg:grid-rows-[auto_minmax(0,1fr)] lg:gap-4 lg:space-y-0">
+      <div className="grid gap-4 lg:grid-cols-[1.75fr_1fr]">
+      <section className="entra relative grid items-center gap-x-6 gap-y-3 overflow-hidden rounded-[18px] bg-ink px-4 py-4 text-white shadow-card sm:px-6 lg:grid-cols-[1.2fr_1fr]" style={{ ["--i" as string]: 0 }}>
         <span aria-hidden className="pointer-events-none absolute -right-14 -top-16 h-56 w-56 rounded-full" style={{ background: "radial-gradient(closest-side, rgba(234,84,9,.5), transparent)" }} />
         <div className="relative flex items-center gap-3">
           <Avatar nombre={nombre} claro />
@@ -115,9 +116,12 @@ export function PanelColaborador({ nombre, clientes, verArchivados, sinLeer = 0,
             </div>
           ) : null}
         </div>
+        <dl className="relative flex flex-wrap gap-x-8 gap-y-1 border-t border-white/15 pt-2.5 text-sm lg:col-span-2">
+          <div className="flex items-baseline gap-2"><dt className="text-white/75">Clientes que nos has pasado</dt><dd className="num text-lg">{clientes.length}</dd></div>
+          <div className="flex items-baseline gap-2"><dt className="text-white/75">En tramitación</dt><dd className="num text-lg text-[#9DC0FF]">{eur0(tramitacion)}</dd></div>
+          <p className="text-white/75">{clientes.filter((c) => c.fase < 4).length} en trámite · {listosLista.length} por cobrar · {pagados.length} {plural(pagados.length, "pagado", "pagados")}</p>
+        </dl>
       </section>
-
-      <section className="grid gap-4 lg:grid-cols-[1.2fr_1fr_1fr]">
         <div className="entra tarjeta flex flex-col justify-center px-5 py-4" style={{ ["--i" as string]: 1 }}>
           <p className="etiqueta">Ya cobrado</p>
           <p className="num mt-0.5 text-4xl text-ink"><Contador valor={cobrado} /></p>
@@ -131,17 +135,7 @@ export function PanelColaborador({ nombre, clientes, verArchivados, sinLeer = 0,
             </>
           ) : <p className="mt-2.5 text-xs text-muted">Lo que INER te ha pagado hasta hoy</p>}
         </div>
-        <div className="entra tarjeta flex flex-col justify-center px-5 py-4" style={{ ["--i" as string]: 2 }}>
-          <p className="etiqueta">Clientes que nos has pasado</p>
-          <p className="num mt-0.5 text-4xl text-ink">{clientes.length}</p>
-          <p className="mt-0.5 text-xs text-muted">{clientes.filter((c) => c.fase < 4).length} en trámite · {listosLista.length} por cobrar · {pagados.length} {plural(pagados.length, "pagado", "pagados")}</p>
-        </div>
-        <div className="entra tarjeta flex flex-col justify-center px-5 py-4" style={{ ["--i" as string]: 3 }}>
-          <p className="etiqueta">En tramitación</p>
-          <p className="num mt-0.5 text-4xl text-net-700">{eur0(tramitacion)}</p>
-          <p className="mt-0.5 text-xs text-muted">Aún sin CAE expedido</p>
-        </div>
-      </section>
+      </div>
 
       <div className="grid gap-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.7fr)]">
         <div className="grid gap-4 lg:min-h-0 lg:grid-rows-[minmax(0,1fr)_auto]">
