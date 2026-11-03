@@ -8,6 +8,6 @@ export default async function MiPerfil() {
   const { data } = await supabase.from("mis_clientes").select("comision,pago");
   const cs = (data ?? []) as Pick<ClienteColab, "comision" | "pago">[];
   const cobrado = cs.filter((c) => c.pago === "paid").reduce((a, c) => a + (c.comision ?? 0), 0);
-  return <Perfil nombre={profile.nombre} email={profile.email} rol="Colaborador" desde={profile.created_at}
+  return <Perfil nombre={profile.nombre} email={profile.email} rol="Colaborador" desde={profile.created_at} puedeEditarNombre={false}
     datos={[{ etiqueta: "Clientes que nos has pasado", valor: String(cs.length) }, { etiqueta: "Ya cobrado", valor: eur0(cobrado), tono: "batt" }, { etiqueta: "Pagos solicitados", valor: String(cs.filter((c) => c.pago === "requested").length), tono: "net" }]} />;
 }

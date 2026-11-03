@@ -15,6 +15,7 @@ const PREGUNTAS: [string, string][] = [
   ["¿Por qué un cliente no tiene MWh o comisión todavía?", "Los MWh los introduce INER cuando termina el cálculo. Hasta entonces la comisión aparece como «—»."],
   ["¿Dónde veo los clientes ya pagados?", "Los clientes pagados se archivan solos a los 7 días. Los encuentras en «Ver archivados», en tu panel."],
   ["¿Puedo añadir yo un cliente?", "No. INER da de alta a los clientes que nos pasas. Escríbenos desde Mensajes con sus datos y los añadimos."],
+  ["¿Puedo cambiar el nombre de mi empresa?", "No desde el portal: es el nombre con el que INER te registra y te paga. Escríbenos desde Mensajes y lo cambiamos."],
   ["He olvidado mi contraseña", "Pide a INER que te asigne una nueva. Cuando entres, puedes cambiarla tú desde «Mi perfil»."],
 ];
 

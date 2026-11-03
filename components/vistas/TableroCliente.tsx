@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { crearCliente, guardarMwh, guardarPct, marcarPagado, moverFase, restablecerContrasena, sacarDelArchivo } from "@/app/actions";
+import { cambiarNombreDeCuenta } from "@/app/actions";
 import { CampoContrasena } from "@/components/CampoContrasena";
 import { Avatar } from "@/components/Avatar";
 import { Kpi, KpiFila } from "@/components/Fase";
@@ -84,6 +85,20 @@ export function TableroCliente({ col, clientes, verArchivados, esAdmin = false }
           </details>
         )}
       </section>
+
+      {esAdmin && (
+        <details className="tarjeta group p-5">
+          <summary className="cursor-pointer list-none font-bold">Cambiar nombre<span className="ml-2 text-sm font-normal text-muted group-open:hidden">el que se muestra y con el que se le paga</span></summary>
+          <FormEstado action={cambiarNombreDeCuenta} className="mt-4 flex max-w-xl flex-wrap items-end gap-3">
+            <input type="hidden" name="id" value={id} />
+            <div className="min-w-[14rem] flex-1">
+              <label className="label" htmlFor="nombre-cuenta">Nombre o razón social</label>
+              <input id="nombre-cuenta" name="nombre" required maxLength={120} defaultValue={col.nombre ?? ""} className="input" />
+            </div>
+            <Submit className="btn-primary" pendiente="Guardando…">Guardar nombre</Submit>
+          </FormEstado>
+        </details>
+      )}
 
       {esAdmin && (
         <details className="tarjeta group p-5">

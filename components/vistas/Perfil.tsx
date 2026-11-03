@@ -5,8 +5,8 @@ import { Kpi } from "@/components/Fase";
 import { Submit } from "@/components/Submit";
 import { fecha } from "@/lib/utils";
 
-export function Perfil({ nombre, email, rol, desde, datos }: {
-  nombre: string | null; email: string; rol: string; desde: string; datos?: { etiqueta: string; valor: string; tono?: "ink" | "batt" | "net" }[];
+export function Perfil({ nombre, email, rol, desde, datos, puedeEditarNombre }: {
+  nombre: string | null; email: string; rol: string; desde: string; puedeEditarNombre: boolean; datos?: { etiqueta: string; valor: string; tono?: "ink" | "batt" | "net" }[];
 }) {
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -28,15 +28,23 @@ export function Perfil({ nombre, email, rol, desde, datos }: {
         </section>
       )}
 
-      <FormEstado action={guardarNombre} className="tarjeta space-y-4 p-6">
-        <h2 className="text-xl font-bold">Tu nombre</h2>
-        <p className="text-sm text-muted">Es el que verán en INER y en los mensajes.</p>
-        <div className="max-w-md">
-          <label className="label" htmlFor="nombre">Nombre o razón social</label>
-          <input id="nombre" name="nombre" required maxLength={120} defaultValue={nombre ?? ""} className="input" />
-        </div>
-        <Submit className="btn-primary" pendiente="Guardando…">Guardar nombre</Submit>
-      </FormEstado>
+      {puedeEditarNombre ? (
+        <FormEstado action={guardarNombre} className="tarjeta space-y-4 p-6">
+          <h2 className="text-xl font-bold">Tu nombre</h2>
+          <p className="text-sm text-muted">Es el que se muestra en el portal y en los mensajes.</p>
+          <div className="max-w-md">
+            <label className="label" htmlFor="nombre">Nombre</label>
+            <input id="nombre" name="nombre" required maxLength={120} defaultValue={nombre ?? ""} className="input" />
+          </div>
+          <Submit className="btn-primary" pendiente="Guardando…">Guardar nombre</Submit>
+        </FormEstado>
+      ) : (
+        <section className="tarjeta p-6">
+          <h2 className="text-xl font-bold">Tu nombre</h2>
+          <p className="mt-2 text-lg font-semibold">{nombre ?? email}</p>
+          <p className="mt-1 text-sm text-muted">Es el nombre con el que INER te registra y te paga la comisión. Si necesitas cambiarlo, escríbenos desde Mensajes.</p>
+        </section>
+      )}
 
       <FormEstado action={cambiarMiContrasena} className="tarjeta space-y-4 p-6">
         <h2 className="text-xl font-bold">Cambiar contraseña</h2>

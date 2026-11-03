@@ -221,16 +221,34 @@ export async function crearCuenta(_: Estado, fd: FormData): Promise<Estado> {
 }
 
 /* ---------- Perfil (cualquier cuenta) ---------- */
+/** Cambia el nombre propio. Los colaboradores no pueden: es la identidad con la que se les paga, y lo cambia INER. */
 export async function guardarNombre(_: Estado, fd: FormData): Promise<Estado> {
-  const { supabase, user } = await getSessionProfile();
-  if (!user) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
+  const { supabase, user, profile } = await getSessionProfile();
+  if (!user || !profile) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
+  if (profile.rol === "colaborador") return { error: "Tu nombre lo cambia INER. Escríbenos desde Mensajes." };
   const nombre = texto(fd, "nombre");
   if (!nombre) return { error: "Escribe tu nombre." };
   if (nombre.length > MAX_NOMBRE_PERSONA) return { error: `El nombre no puede superar ${MAX_NOMBRE_PERSONA} caracteres.` };
-  const { error } = await supabase.from("profiles").update({ nombre }).eq("id", user.id);
-  if (error) return { error: "No se pudo guardar el nombre." };
+  const { data, error } = await supabase.from("profiles").update({ nombre }).eq("id", user.id).select("id");
+  if (error || !data?.length) return { error: "No se pudo guardar el nombre." };
   revalidatePath("/", "layout");
   return { ok: "Nombre guardado" };
+}
+
+/** El admin corrige el nombre de cualquier cuenta. El cambio queda en `audit_log` por el disparador de `profiles`. */
+export async function cambiarNombreDeCuenta(_: Estado, fd: FormData): Promise<Estado> {
+  const { supabase, user, profile } = await getSessionProfile();
+  if (!user || profile?.rol !== "admin") return { error: "Solo un administrador puede cambiar nombres." };
+  const id = texto(fd, "id");
+  const nombre = texto(fd, "nombre");
+  if (!esUuid(id)) return { error: "Falta la cuenta." };
+  if (!nombre) return { error: "Escribe el nombre." };
+  if (nombre.length > MAX_NOMBRE_PERSONA) return { error: `El nombre no puede superar ${MAX_NOMBRE_PERSONA} caracteres.` };
+  const { data, error } = await supabase.from("profiles").update({ nombre }).eq("id", id).select("id");
+  if (error || !data?.length) return { error: "No se pudo cambiar el nombre." };
+  revalidatePath(`/equipo/colaboradores/${id}`);
+  revalidatePath("/equipo");
+  return { ok: "Nombre cambiado" };
 }
 
 export async function cambiarMiContrasena(_: Estado, fd: FormData): Promise<Estado> {
