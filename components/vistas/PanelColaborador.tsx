@@ -8,10 +8,20 @@ import { Submit } from "@/components/Submit";
 import { Barras } from "@/components/Graficos";
 import { Vacio } from "@/components/Ilustraciones";
 import { TablaClientes } from "@/components/vistas/TablaClientes";
-import { claveMes, eur0, primerNombre, ultimosMeses } from "@/lib/utils";
-import type { ClienteColab } from "@/lib/types";
+import { FASES, claveMes, eur0, fecha, primerNombre, ultimosMeses } from "@/lib/utils";
+import type { Cambio, ClienteColab } from "@/lib/types";
 
-export function PanelColaborador({ nombre, clientes, verArchivados, sinLeer = 0 }: { nombre: string; clientes: ClienteColab[]; verArchivados: boolean; sinLeer?: number }) {
+/** "Hoy", "Ayer", "Hace 3 días" y, pasada una semana, la fecha. */
+function hace(f: string) {
+  const dias = Math.floor((Date.now() - new Date(f).getTime()) / 864e5);
+  if (dias <= 0) return "Hoy";
+  if (dias === 1) return "Ayer";
+  return dias < 7 ? `Hace ${dias} días` : fecha(f);
+}
+
+type Novedad = { clave: string; cuando: string; tono: "ok" | "na" | "net"; texto: React.ReactNode };
+
+export function PanelColaborador({ nombre, clientes, verArchivados, sinLeer = 0, historial = [] }: { nombre: string; clientes: ClienteColab[]; verArchivados: boolean; sinLeer?: number; historial?: Cambio[] }) {
   const activos = clientes.filter((c) => !c.archivado_at);
   const nArchivados = clientes.length - activos.length;
   const lista = verArchivados ? clientes.filter((c) => c.archivado_at) : activos;
@@ -29,6 +39,31 @@ export function PanelColaborador({ nombre, clientes, verArchivados, sinLeer = 0 
   const esteMes = porMes[porMes.length - 1] ?? 0;
   const mesPasado = porMes[porMes.length - 2] ?? 0;
   const primero = listosLista[0];
+  // Fecha en la que cada cliente llegó a cada fase (la última vez, por si retrocedió); la primera es el alta.
+  const fechas: Record<string, (string | null)[]> = {};
+  for (const c of clientes) {
+    fechas[c.id] = FASES.map((_, i) => (i === 0 ? c.created_at : i <= c.fase ? historial.find((h) => h.cliente_id === c.id && h.fase_nueva === i)?.fecha ?? null : null));
+  }
+  const nombrePor = new Map(clientes.map((c) => [c.id, c.nombre]));
+  const novedades: Novedad[] = [];
+  for (const c of clientes) {
+    novedades.push({ clave: `a${c.id}`, cuando: c.created_at, tono: "net", texto: <>INER ha dado de alta a <b>{c.nombre}</b></> });
+    if (c.solicitado_at) novedades.push({ clave: `s${c.id}`, cuando: c.solicitado_at, tono: "na", texto: <>Has solicitado el pago de <b>{c.nombre}</b></> });
+    if (c.pagado_at) novedades.push({ clave: `p${c.id}`, cuando: c.pagado_at, tono: "ok", texto: <>INER ha marcado como pagado <b>{c.nombre}</b>{c.comision != null ? `: ${eur0(c.comision)}` : ""}</> });
+  }
+  for (const h of historial) {
+    const n = nombrePor.get(h.cliente_id);
+    if (!n || h.fase_anterior == null) continue;
+    const avanza = h.fase_nueva > h.fase_anterior;
+    novedades.push({
+      clave: `f${h.cliente_id}-${h.fecha}`, cuando: h.fecha, tono: avanza && h.fase_nueva === 4 ? "na" : "net",
+      texto: avanza
+        ? (h.fase_nueva === 4 ? <><b>{n}</b> ya tiene el CAE expedido</> : <><b>{n}</b> pasó a «{FASES[h.fase_nueva]}»</>)
+        : <><b>{n}</b> volvió a «{FASES[h.fase_nueva]}»</>,
+    });
+  }
+  novedades.sort((a, b) => b.cuando.localeCompare(a.cuando));
+  const recientes = novedades.slice(0, 3);
   const plural = (n: number, uno: string, varios: string) => (n === 1 ? uno : varios);
 
   return (
@@ -108,15 +143,29 @@ export function PanelColaborador({ nombre, clientes, verArchivados, sinLeer = 0 
       </section>
 
       <div className="grid gap-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.8fr)]">
+        <div className="grid gap-4 lg:min-h-0 lg:grid-rows-[minmax(0,1fr)_auto]">
         <section className="entra tarjeta flex flex-col p-4 sm:p-5 lg:min-h-0" style={{ ["--i" as string]: 3 }}>
           <h2 className="text-lg font-bold">Lo que has cobrado, mes a mes</h2>
           <p className="mb-3 text-xs text-muted">Últimos seis meses, según la fecha en que INER marcó cada pago.</p>
           {pagados.length === 0
             ? <Vacio icono="bateria" tono="batt" titulo="Aún no hay cobros" texto="Cuando INER marque como pagado el primer cliente, verás aquí tu evolución." />
-            : <Barras llenar lg={{ W: 520, H: 300 }} titulo="Comisión cobrada por mes" meses={meses.map((m) => m.etiqueta)} series={[{ nombre: "Cobrado", color: "#0EA394", valores: porMes }]} formato={eur0} />}
+            : <Barras llenar resaltarUltimo lg={{ W: 520, H: 300 }} titulo="Comisión cobrada por mes" meses={meses.map((m) => m.etiqueta)} series={[{ nombre: "Cobrado", color: "#0EA394", valores: porMes }]} formato={eur0} />}
         </section>
-
-        <section id="clientes" className="entra tarjeta flex flex-col p-4 sm:p-5 lg:min-h-0" style={{ ["--i" as string]: 4 }}>
+          {recientes.length > 0 && (
+            <section className="entra tarjeta px-4 py-3 sm:px-5" style={{ ["--i" as string]: 4 }}>
+              <h2 className="text-base font-bold">Novedades</h2>
+              <ul className="mt-1 divide-y divide-line">
+                {recientes.map((n) => (
+                  <li key={n.clave} className="flex items-baseline gap-2.5 py-1.5 text-[13px]">
+                    <span aria-hidden className={`h-2 w-2 shrink-0 translate-y-[-1px] rounded-full ${n.tono === "ok" ? "bg-batt" : n.tono === "na" ? "bg-marca" : "bg-net-700"}`} />
+                    <span className="min-w-0 flex-1 leading-snug">{n.texto}</span><time dateTime={n.cuando} className="shrink-0 text-xs text-muted">{hace(n.cuando)}</time>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+        <section id="clientes" className="entra tarjeta flex flex-col p-4 sm:p-5 lg:min-h-0" style={{ ["--i" as string]: 5 }}>
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-bold">{verArchivados ? "Clientes archivados" : "Tus clientes"}</h2>
             {(nArchivados > 0 || verArchivados) && (
@@ -125,7 +174,7 @@ export function PanelColaborador({ nombre, clientes, verArchivados, sinLeer = 0 
           </div>
           {lista.length === 0 && !verArchivados
             ? <Vacio icono="sol" titulo="Aún no tienes clientes" texto="INER los dará de alta por ti. En cuanto aparezca el primero, podrás seguir su fase y tu comisión desde aquí." />
-            : <TablaClientes clientes={lista} vacio="No hay clientes archivados." />}
+            : <TablaClientes clientes={lista} fechas={fechas} vacio="No hay clientes archivados." />}
         </section>
       </div>
     </div>

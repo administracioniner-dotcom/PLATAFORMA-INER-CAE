@@ -10,3 +10,4 @@ export type Mensaje = {
   id: number; colaborador_id: string; cliente_id: string | null; remitente: "colaborador" | "delegado" | "sistema";
   texto: string; leido: boolean; es_sistema: boolean; fecha: string;
 };
+export type Cambio = { cliente_id: string; fase_anterior: number | null; fase_nueva: number; fecha: string };
