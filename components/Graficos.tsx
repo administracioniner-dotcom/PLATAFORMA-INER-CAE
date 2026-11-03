@@ -9,7 +9,7 @@ function techoRedondo(max: number, entero: boolean) {
   return ([1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].find((c) => c >= m) ?? 10) * e;
 }
 
-type Props = { meses: string[]; series: Serie[]; formato?: (n: number) => string; titulo: string; entero?: boolean; llenar?: boolean; lg?: { W: number; H: number } };
+type Props = { meses: string[]; series: Serie[]; formato?: (n: number) => string; titulo: string; entero?: boolean; llenar?: boolean; lg?: { W: number; H: number }; resaltarUltimo?: boolean };
 
 /** Dos dibujos con distinta proporción (móvil y escritorio) para que el texto se lea bien en ambos. */
 export function Barras(p: Props) {
@@ -34,7 +34,7 @@ export function Barras(p: Props) {
   );
 }
 
-function Dibujo({ meses, series, formato = (n) => String(n), titulo, entero = false, W, H, clase }: Props & { W: number; H: number; clase: string }) {
+function Dibujo({ meses, series, formato = (n) => String(n), titulo, entero = false, resaltarUltimo = false, W, H, clase }: Props & { W: number; H: number; clase: string }) {
   const L = 44, B = 28, T = 12, R = 8;
   const totales = meses.map((_, i) => series.reduce((a, s) => a + (s.valores[i] ?? 0), 0));
   const techo = techoRedondo(Math.max(...totales, 1), entero);
@@ -56,8 +56,14 @@ function Dibujo({ meses, series, formato = (n) => String(n), titulo, entero = fa
       {meses.map((m, i) => {
         const cx = L + ancho * i + ancho / 2;
         let acumulado = 0;
+        const etiqueta = `${m}: ${formato(totales[i])}`;
+        const tw = etiqueta.length * 6.6 + 18;
+        const altoBarra = (totales[i] / techo) * alto;
+        const ty = Math.max(T + alto - altoBarra - 34, 2);
+        const tx = Math.min(Math.max(cx - tw / 2, 2), W - tw - 2);
         return (
-          <g key={m + i}>
+          <g key={m + i} className="col-g" tabIndex={0} aria-label={etiqueta}>
+            <rect className="hit" x={L + ancho * i} y={T} width={ancho} height={alto + B - 6} fill="transparent" />
             {series.map((s) => {
               const v = s.valores[i] ?? 0;
               if (v <= 0) return null;
@@ -65,12 +71,14 @@ function Dibujo({ meses, series, formato = (n) => String(n), titulo, entero = fa
               const y = T + alto - acumulado - h + (series.length > 1 ? 0.75 : 0);
               acumulado += h;
               return (
-                <rect key={s.nombre} x={cx - barra / 2} y={y} width={barra} height={Math.max(series.length > 1 ? h - 1.5 : h, 2)} rx={series.length > 1 ? 3 : 4} fill={s.color} className="barra" style={{ ["--i" as string]: i }}>
-                  <title>{`${m}: ${formato(v)}${series.length > 1 ? ` · ${s.nombre}` : ""}`}</title>
-                </rect>
+                <rect key={s.nombre} x={cx - barra / 2} y={y} width={barra} height={Math.max(series.length > 1 ? h - 1.5 : h, 2)} rx={series.length > 1 ? 3 : 4} fill={s.color} opacity={resaltarUltimo && i < meses.length - 1 ? 0.6 : 1} className="barra" style={{ ["--i" as string]: i }} />
               );
             })}
-            <text x={cx} y={H - 8} textAnchor="middle" fontSize="12" fill="#4A5565">{m}</text>
+            <text x={cx} y={H - 8} textAnchor="middle" fontSize="12" fill="#4A5565" fontWeight={resaltarUltimo && i === meses.length - 1 ? 700 : 400}>{m}</text>
+            <g className="tip">
+              <rect x={tx} y={ty} width={tw} height={24} rx={8} fill="#021037" />
+              <text x={tx + tw / 2} y={ty + 16} textAnchor="middle" fontSize="12" fontWeight="600" fill="#fff">{etiqueta}</text>
+            </g>
           </g>
         );
       })}

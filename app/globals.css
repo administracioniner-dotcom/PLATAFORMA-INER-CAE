@@ -45,3 +45,10 @@ body { @apply bg-bg text-ink antialiased; }
 /* Las tarjetas del panel entran una tras otra al cargar. */
 @keyframes entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .entra { animation: entra .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 80ms); }
+
+/* Gráficas: el importe aparece al pasar el ratón o al enfocar la columna con el teclado. */
+.col-g { outline: none; }
+.col-g .tip { opacity: 0; pointer-events: none; transition: opacity .15s; }
+.col-g:hover .tip, .col-g:focus-visible .tip { opacity: 1; }
+.col-g:hover .barra, .col-g:focus-visible .barra { opacity: 1; }
+.col-g:focus-visible .hit { stroke: #2F6FE0; stroke-width: 2; rx: 6; }
