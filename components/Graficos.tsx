@@ -1,3 +1,4 @@
+import { cx } from "@/lib/utils";
 type Serie = { nombre: string; color: string; valores: number[] };
 
 /** Gráfica de barras (apiladas si hay varias series) en SVG, con tabla oculta para lectores de pantalla. */
@@ -83,5 +84,43 @@ function Dibujo({ meses, series, formato = (n) => String(n), titulo, entero = fa
         );
       })}
     </svg>
+  );
+}
+
+
+/** Barras mensuales dibujadas con HTML: llenan la tarjeta a cualquier tamaño y el texto conserva su tamaño real. El importe sale al pasar el ratón o al enfocar la columna. */
+export function GraficaMeses({ meses, valores, formato = (n: number) => String(n), titulo }: { meses: string[]; valores: number[]; formato?: (n: number) => string; titulo: string }) {
+  const techo = techoRedondo(Math.max(...valores, 1), false);
+  const ultimo = meses.length - 1;
+  return (
+    <figure className="flex h-full min-h-[11rem] flex-col">
+      <div className="min-h-0 flex-1 pt-3"><div className="relative h-full pl-12">
+        {[0, 0.5, 1].map((g) => (
+          <div key={g} aria-hidden className="pointer-events-none absolute inset-x-0 flex items-center" style={{ bottom: `${g * 100}%`, transform: "translateY(50%)" }}>
+            <span className="w-11 shrink-0 pr-2 text-right text-xs text-muted">{formato(techo * g)}</span>
+            <span className={cx("h-px flex-1", g === 0 ? "bg-line" : "border-t border-dashed border-line")} />
+          </div>
+        ))}
+        <div className="relative z-10 flex h-full items-end gap-2 sm:gap-3">
+          {meses.map((m, i) => {
+            const v = valores[i] ?? 0;
+            const alto = v > 0 ? Math.max((v / techo) * 100, 2) : 0;
+            return (
+              <div key={m + i} tabIndex={0} aria-label={`${m}: ${formato(v)}`} className="group relative flex h-full flex-1 items-end justify-center outline-none">
+                <span aria-hidden className="barra block w-full max-w-[3.5rem] rounded-t-lg group-focus-visible:ring-2 group-focus-visible:ring-net-700" style={{ height: v > 0 ? `${alto}%` : "2px", background: v > 0 ? "#0EA394" : "#E5E7EB", opacity: v > 0 && i < ultimo ? 0.62 : 1, ["--i" as string]: i }} />
+                <span aria-hidden className="pointer-events-none absolute left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1 text-xs font-semibold text-white opacity-0 shadow-lift transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" style={{ bottom: `calc(${alto}% + 8px)` }}>{m}: {formato(v)}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div></div>
+      <div aria-hidden className="mt-1.5 flex gap-2 pl-12 sm:gap-3">
+        {meses.map((m, i) => <span key={m + i} className={cx("flex-1 text-center text-xs capitalize", i === ultimo ? "font-bold text-ink" : "text-muted")}>{m}</span>)}
+      </div>
+      <figcaption className="sr-only">
+        <table><caption>{titulo}</caption><thead><tr><th>Mes</th><th>Cobrado</th></tr></thead>
+          <tbody>{meses.map((m, i) => <tr key={m + i}><td>{m}</td><td>{formato(valores[i] ?? 0)}</td></tr>)}</tbody></table>
+      </figcaption>
+    </figure>
   );
 }
