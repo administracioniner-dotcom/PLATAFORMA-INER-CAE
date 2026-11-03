@@ -41,3 +41,7 @@ body { @apply bg-bg text-ink antialiased; }
 
 /* Ancho común de cabecera, contenido y pie: ocupa la pantalla con un margen lateral que crece con ella. */
 .contenedor { @apply mx-auto w-full max-w-[110rem] px-4 sm:px-6 lg:px-10; }
+
+/* Las tarjetas del panel entran una tras otra al cargar. */
+@keyframes entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.entra { animation: entra .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 80ms); }
