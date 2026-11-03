@@ -103,6 +103,18 @@ export async function enviarMensaje(fd: FormData): Promise<Estado> {
   revalidatePath("/equipo/mensajes");
 }
 
+/** Marca como leídos los mensajes que la otra parte ha enviado en una conversación. Solo cuenta si la persona la está viendo. */
+export async function marcarLeidos(colaboradorId: string, clienteId: string | null): Promise<void> {
+  const { supabase, user, profile } = await getSessionProfile();
+  if (!user || !profile) return;
+  const colab = profile.rol === "colaborador" ? user.id : colaboradorId;
+  if (!esUuid(colab) || (clienteId && !esUuid(clienteId))) return;
+  let q = supabase.from("mensajes").update({ leido: true }).eq("colaborador_id", colab).eq("leido", false);
+  q = profile.rol === "colaborador" ? q.neq("remitente", "colaborador") : q.eq("remitente", "colaborador");
+  q = clienteId ? q.eq("cliente_id", clienteId) : q.is("cliente_id", null);
+  await q;
+}
+
 /* ---------- Equipo (delegado / admin) ---------- */
 async function soloStaff() {
   const s = await getSessionProfile();

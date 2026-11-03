@@ -7,10 +7,30 @@ export const eur0 = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0, useGrouping: "always" }).format(n);
 export const num = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("es-ES", { maximumFractionDigits: 3 }).format(n);
+/** Las fechas se muestran siempre en hora de España, también cuando las pinta el servidor (que está en UTC). */
+const TZ = "Europe/Madrid";
 export const fecha = (s: string | null) =>
-  s ? new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(s)) : "—";
+  s ? new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "short", year: "numeric", timeZone: TZ }).format(new Date(s)) : "—";
 export const fechaHora = (s: string) =>
-  new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(s));
+  new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: TZ }).format(new Date(s));
+export const hora = (s: string) => new Intl.DateTimeFormat("es-ES", { hour: "2-digit", minute: "2-digit", timeZone: TZ }).format(new Date(s));
+const claveDia = (d: Date) => new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: TZ }).format(d);
+export const diaClave = (s: string) => claveDia(new Date(s));
+/** "Hoy", "Ayer" o el día de la semana con su fecha. */
+export function etiquetaDia(s: string, ahora = new Date()) {
+  const k = diaClave(s);
+  if (k === claveDia(ahora)) return "Hoy";
+  if (k === claveDia(new Date(ahora.getTime() - 864e5))) return "Ayer";
+  return new Intl.DateTimeFormat("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: TZ }).format(new Date(s));
+}
+/** Hora si es de hoy, "Ayer", el día de la semana si es de esta semana, o día y mes. */
+export function fechaLista(s: string, ahora = new Date()) {
+  const k = diaClave(s);
+  if (k === claveDia(ahora)) return hora(s);
+  if (k === claveDia(new Date(ahora.getTime() - 864e5))) return "Ayer";
+  if (ahora.getTime() - new Date(s).getTime() < 6 * 864e5) return new Intl.DateTimeFormat("es-ES", { weekday: "short", timeZone: TZ }).format(new Date(s)).replace(/^./, (c) => c.toUpperCase());
+  return new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short", timeZone: TZ }).format(new Date(s));
+}
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
 /** Color de cada fase: degradado de la marca mientras se tramita y verde-azulado cuando el CAE está expedido. */
