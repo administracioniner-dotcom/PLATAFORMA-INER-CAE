@@ -35,9 +35,9 @@ export function TablaClientes({ clientes, vacio }: { clientes: ClienteColab[]; v
   }, [clientes, q, orden]);
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       {clientes.length > 1 && (
-        <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="mb-3 flex flex-wrap items-center gap-3">
           <label className="sr-only" htmlFor="buscar-cliente">Buscar cliente</label>
           <input id="buscar-cliente" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar cliente" className="input min-w-0 basis-full sm:flex-1 sm:basis-auto sm:max-w-xs" />
           <label className="sr-only" htmlFor="orden-cliente">Ordenar por</label>
@@ -50,11 +50,11 @@ export function TablaClientes({ clientes, vacio }: { clientes: ClienteColab[]; v
       {lista.length === 0 ? (
         <p className="rounded-xl bg-soft p-8 text-center text-muted">{clientes.length === 0 ? vacio : "Ningún cliente coincide con la búsqueda."}</p>
       ) : (
-        <>
+        <div className="min-h-0 flex-1 overflow-auto">
           <table className="hidden w-full text-left text-sm md:table">
-            <thead className="text-xs text-muted">
+            <thead className="sticky top-0 z-10 bg-panel text-xs text-muted">
               <tr>
-                <th className="pb-3 font-semibold">Cliente</th><th className="pb-3 font-semibold">En qué fase está</th>
+                <th className="pb-2 font-semibold">Cliente</th><th className="pb-3 font-semibold">En qué fase está</th>
                 <th className="pb-3 text-right font-semibold">MWh</th><th className="pb-3 text-right font-semibold">Tu %</th>
                 <th className="pb-3 text-right font-semibold">Tu comisión</th><th className="pb-3 pl-8 font-semibold">Cobro</th>
               </tr>
@@ -62,12 +62,12 @@ export function TablaClientes({ clientes, vacio }: { clientes: ClienteColab[]; v
             <tbody className="divide-y divide-line border-t border-line">
               {lista.map((c) => (
                 <tr key={c.id} className="transition-colors hover:bg-soft/60">
-                  <td className="py-4 pl-3 pr-4" style={{ borderLeft: `4px solid ${FASE_COLOR[c.fase]}` }}><span className="font-bold">{c.nombre}</span><span className="block text-xs text-muted">Alta {fecha(c.created_at)}</span></td>
-                  <td className="py-4 pr-4"><Recorrido fase={c.fase} /></td>
-                  <td className="py-4 text-right font-mono tabular-nums">{num(c.mwh)}</td>
-                  <td className="py-4 text-right font-mono tabular-nums">{num(c.pct)} %</td>
-                  <td className="py-4 text-right font-mono font-bold tabular-nums">{eur(c.comision)}</td>
-                  <td className="py-4 pl-8"><Cobro c={c} /></td>
+                  <td className="py-3 lg:py-2 pl-3 pr-4" style={{ borderLeft: `4px solid ${FASE_COLOR[c.fase]}` }}><span className="font-bold">{c.nombre}</span><span className="block text-xs text-muted">Alta {fecha(c.created_at)}</span></td>
+                  <td className="py-3 pr-4 lg:py-2"><Recorrido fase={c.fase} /></td>
+                  <td className="py-3 lg:py-2 text-right font-mono tabular-nums">{num(c.mwh)}</td>
+                  <td className="py-3 lg:py-2 text-right font-mono tabular-nums">{num(c.pct)} %</td>
+                  <td className="py-3 lg:py-2 text-right font-mono font-bold tabular-nums">{eur(c.comision)}</td>
+                  <td className="py-3 pl-8 lg:py-2"><Cobro c={c} /></td>
                 </tr>
               ))}
             </tbody>
@@ -85,8 +85,8 @@ export function TablaClientes({ clientes, vacio }: { clientes: ClienteColab[]; v
               </li>
             ))}
           </ul>
-        </>
+        </div>
       )}
-    </>
+    </div>
   );
 }

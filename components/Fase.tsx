@@ -23,7 +23,7 @@ export function Recorrido({ fase }: { fase: number }) {
 }
 
 /** Reparto de clientes por fase en una sola barra; cada tramo crece al cargar. */
-export function Embudo({ conteos, compacto = false }: { conteos: number[]; compacto?: boolean }) {
+export function Embudo({ conteos, compacto = false, linea = false }: { conteos: number[]; compacto?: boolean; linea?: boolean }) {
   const total = conteos.reduce((a, b) => a + b, 0);
   return (
     <div>
@@ -33,7 +33,17 @@ export function Embudo({ conteos, compacto = false }: { conteos: number[]; compa
           <span key={i} className="tramo h-full rounded-full" style={{ flexGrow: n, background: FASE_COLOR[i], ["--i" as string]: i }} />
         ))}
       </div>
-      {!compacto && (
+      {linea && !compacto && (
+        <ul className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted">
+          {FASES.map((f, i) => (
+            <li key={f} className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full" style={{ background: FASE_COLOR[i] }} />
+              <span className="num text-sm text-ink">{conteos[i]}</span>{f}
+            </li>
+          ))}
+        </ul>
+      )}
+      {!compacto && !linea && (
         <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-5">
           {FASES.map((f, i) => (
             <li key={f} className="flex items-start gap-2">
@@ -48,15 +58,15 @@ export function Embudo({ conteos, compacto = false }: { conteos: number[]; compa
 }
 
 /** Tarjeta de indicador. `marca` la destaca en azul marino (cifra principal del panel). */
-export function Kpi({ etiqueta, valor, nota, tono = "ink", accion }: { etiqueta: string; valor: string; nota?: string; tono?: "ink" | "sun" | "batt" | "net" | "marca"; accion?: { href: string; texto: string } }) {
+export function Kpi({ etiqueta, valor, nota, tono = "ink", accion, compacto = false }: { etiqueta: string; valor: string; nota?: string; tono?: "ink" | "sun" | "batt" | "net" | "marca"; accion?: { href: string; texto: string }; compacto?: boolean }) {
   const marca = tono === "marca";
   const color = { ink: "text-ink", sun: "text-sun-700", batt: "text-batt-700", net: "text-net-700", marca: "text-white" }[tono];
   return (
-    <div className={cx("flex flex-col rounded-[18px] p-5 shadow-card", marca ? "justify-between bg-ink p-6 sm:p-8" : "border border-line bg-panel")}>
+    <div className={cx("flex flex-col rounded-[18px] p-5 shadow-card", marca ? (compacto ? "justify-center bg-ink p-4 sm:p-5" : "justify-between bg-ink p-6 sm:p-8") : "border border-line bg-panel")}>
       <div>
         <p className={cx("etiqueta", marca && "!text-white/75")}>{etiqueta}</p>
-        <p className={cx("num mt-2 text-3xl", color, marca && "text-5xl sm:text-6xl")}>{valor}</p>
-        {nota && <p className={cx("mt-1", marca ? "mt-3 max-w-xs text-sm text-white/85" : "text-xs text-muted")}>{nota}</p>}
+        <p className={cx("num mt-2 text-3xl", color, marca && (compacto ? "text-4xl" : "text-5xl sm:text-6xl"))}>{valor}</p>
+        {nota && <p className={cx("mt-1", marca ? (compacto ? "mt-1.5 text-xs text-white/85" : "mt-3 max-w-xs text-sm text-white/85") : "text-xs text-muted")}>{nota}</p>}
       </div>
       {accion && <a href={accion.href} className="btn btn-primary flecha mt-6 self-start">{accion.texto}</a>}
     </div>

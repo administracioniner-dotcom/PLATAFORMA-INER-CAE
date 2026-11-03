@@ -9,16 +9,16 @@ function techoRedondo(max: number, entero: boolean) {
   return ([1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].find((c) => c >= m) ?? 10) * e;
 }
 
-type Props = { meses: string[]; series: Serie[]; formato?: (n: number) => string; titulo: string; entero?: boolean };
+type Props = { meses: string[]; series: Serie[]; formato?: (n: number) => string; titulo: string; entero?: boolean; llenar?: boolean; lg?: { W: number; H: number } };
 
 /** Dos dibujos con distinta proporción (móvil y escritorio) para que el texto se lea bien en ambos. */
 export function Barras(p: Props) {
-  const { meses, series, titulo, formato = (n: number) => String(n) } = p;
+  const { meses, series, titulo, formato = (n: number) => String(n), llenar = false, lg = { W: 1100, H: 260 } } = p;
   return (
-    <figure>
+    <figure className={llenar ? "lg:flex lg:h-full lg:min-h-0 lg:flex-col" : undefined}>
       <div className="sm:hidden"><Dibujo {...p} W={340} H={230} clase="w-full" /></div>
       <div className="hidden sm:block lg:hidden"><Dibujo {...p} W={600} H={220} clase="w-full" /></div>
-      <div className="hidden lg:block"><Dibujo {...p} W={1100} H={260} clase="w-full" /></div>
+      <div className={llenar ? "hidden lg:block lg:min-h-0 lg:flex-1" : "hidden lg:block"}><Dibujo {...p} W={lg.W} H={lg.H} clase={llenar ? "h-full w-full" : "w-full"} /></div>
       {series.length > 1 && (
         <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
           {series.map((s) => <li key={s.nombre} className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />{s.nombre}</li>)}
