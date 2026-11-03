@@ -7,7 +7,7 @@ Next.js 15 + Tailwind + Supabase (proyecto `portal-colaboradores-cae`, Fráncfor
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto de Supabase. |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave pública (*publishable*) de Supabase. Es pública por diseño: la seguridad la dan las políticas RLS. |
-| `AVISO_CHAT_WEBHOOK` | *(opcional)* URL del webhook de un espacio de Google Chat. Es un secreto. Ver «Avisos de mensajes nuevos». |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | *(opcionales)* Cuenta de correo para los avisos de mensajes nuevos. `SMTP_PASS` es un secreto. Ver «Avisos de mensajes nuevos». |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API Keys → *secret*. **Solo servidor, nunca en el código.** Marcar como *Sensitive*. |
 
 ## Cuentas
@@ -17,12 +17,22 @@ No se usa el correo para dar de alta ni para recuperar contraseñas:
 - El alta y el cambio de contraseña por un administrador quedan en `audit_log` (sin guardar nunca la contraseña).
 
 ## Avisos de mensajes nuevos
-Cuando un colaborador escribe en el portal, el equipo recibe un aviso en Google Chat: «Mensaje nuevo de [colaborador]» con un enlace a la conversación.
-- **Agrupado:** como máximo un aviso cada 10 minutos por colaborador; una ráfaga de mensajes genera un solo aviso (`lib/avisos.ts`, tabla `avisos_mensajes`).
+Cuando un colaborador escribe en el portal, las cuentas de **administrador** reciben un correo sencillo: «Mensaje nuevo de [colaborador]» con un enlace a la conversación (no incluye el texto del mensaje).
+- **Destinatarios:** el correo de cada cuenta con rol administrador (tabla `profiles`); si entra un administrador nuevo, lo recibe sin tocar nada.
+- **Agrupado:** como máximo un correo cada 10 minutos por colaborador; una ráfaga de mensajes genera uno solo (`lib/avisos.ts`, tabla `avisos_mensajes`).
 - **No avisa** de los mensajes del equipo ni de los avisos automáticos del sistema.
-- **Destinatarios:** quien esté en el espacio de Chat. Para que solo lo vean los administradores, crea un espacio con únicamente ellos.
-- **Configurarlo:** en el espacio de Google Chat → nombre del espacio → *Aplicaciones e integraciones* → *Webhooks* → añadir webhook → copiar la URL. Pégala en Vercel como variable `AVISO_CHAT_WEBHOOK` (Production) y vuelve a desplegar. Sin la variable, simplemente no se envía ningún aviso.
-- Solo se envía a `chat.googleapis.com`; si el aviso falla, el mensaje ya está guardado y se reintenta con el siguiente.
+- **Configurarlo:** variables de entorno en Vercel (Production) y nuevo despliegue. Sin ellas, no se envía nada.
+
+| Variable | Google Workspace (Gmail) | Microsoft 365 |
+|---|---|---|
+| `SMTP_HOST` | `smtp.gmail.com` | `smtp.office365.com` |
+| `SMTP_PORT` | `465` | `587` |
+| `SMTP_USER` | el buzón que envía, p. ej. `portal@iner.es` | ídem |
+| `SMTP_PASS` | contraseña de aplicación (Cuenta de Google → Seguridad → Verificación en dos pasos → Contraseñas de aplicaciones) | contraseña del buzón, con «SMTP autenticado» activado |
+| `SMTP_FROM` | *(opcional)* p. ej. `Portal INER <portal@iner.es>`; por defecto, `SMTP_USER` | ídem |
+
+- Si el correo no sale, el mensaje ya está guardado y el siguiente mensaje lo reintenta.
+- Con Resend se puede usar `smtp.resend.com`, puerto `465`, usuario `resend` y la clave de API como contraseña, pero para enviar a direcciones de `@iner.es` hay que verificar el dominio.
 
 ## Seguridad
 - **Registro cerrado en la base de datos:** el disparador `handle_new_user` solo crea perfiles para cuentas con `app_metadata.creada_por_admin = true`, algo que solo se puede escribir con la clave de servidor. El registro público de Supabase no puede crear cuentas aunque esté activo. Recomendado además: Authentication → Sign In / Providers → desactivar *Allow new users to sign up*.
