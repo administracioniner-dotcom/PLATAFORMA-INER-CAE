@@ -135,29 +135,20 @@ export async function moverFase(fd: FormData): Promise<Estado> {
   return { ok: "Fase actualizada" };
 }
 
-export async function guardarMwh(fd: FormData): Promise<Estado> {
+/** Guarda MWh y porcentaje del colaborador en una sola operación. */
+export async function guardarDatosCliente(fd: FormData): Promise<Estado> {
   const { supabase } = await soloStaff();
   const id = texto(fd, "id");
   const v = texto(fd, "mwh").replace(",", ".");
   const mwh = v === "" ? null : Number(v);
-  if (!esUuid(id)) return { error: "Petición no válida." };
-  if (mwh !== null && (!Number.isFinite(mwh) || mwh < 0 || mwh > MAX_MWH)) return { error: "Los MWh deben ser un número entre 0 y 1.000.000." };
-  const { data, error } = await supabase.from("clientes").update({ mwh }).eq("id", id).select("colaborador_id").single();
-  if (error || !data) return { error: "No se pudieron guardar los MWh." };
-  revalidatePath(`/equipo/colaboradores/${data.colaborador_id}`);
-  return { ok: "MWh guardados" };
-}
-
-export async function guardarPct(fd: FormData): Promise<Estado> {
-  const { supabase } = await soloStaff();
-  const id = texto(fd, "id");
   const pct = Number(texto(fd, "pct").replace(",", "."));
   if (!esUuid(id)) return { error: "Petición no válida." };
+  if (mwh !== null && (!Number.isFinite(mwh) || mwh < 0 || mwh > MAX_MWH)) return { error: "Los MWh deben ser un número entre 0 y 1.000.000." };
   if (!Number.isFinite(pct) || pct < 0 || pct > 100) return { error: "El porcentaje debe estar entre 0 y 100." };
-  const { data, error } = await supabase.from("clientes").update({ pct }).eq("id", id).select("colaborador_id").single();
-  if (error || !data) return { error: "No se pudo guardar el porcentaje." };
+  const { data, error } = await supabase.from("clientes").update({ mwh, pct }).eq("id", id).select("colaborador_id").single();
+  if (error || !data) return { error: "No se pudieron guardar los datos." };
   revalidatePath(`/equipo/colaboradores/${data.colaborador_id}`);
-  return { ok: "Porcentaje guardado" };
+  return { ok: "Datos guardados" };
 }
 
 export async function marcarPagado(fd: FormData): Promise<Estado> {

@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { crearCliente, guardarMwh, guardarPct, marcarPagado, moverFase, sacarDelArchivo } from "@/app/actions";
+import { crearCliente, sacarDelArchivo } from "@/app/actions";
 import { Avatar } from "@/components/Avatar";
 import { Kpi } from "@/components/Fase";
 import { Barras } from "@/components/Graficos";
+import { Vacio } from "@/components/Ilustraciones";
+import { TarjetaCliente } from "@/components/TarjetaCliente";
 import { FormAviso } from "@/components/FormAviso";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
@@ -111,45 +113,34 @@ export function TableroCliente({ col, clientes, verArchivados }: { col: Profile;
             </li>
           ))}
         </ul>
+      ) : lista.length === 0 ? (
+        <div className="lg:min-h-0 lg:flex-1">
+          <Vacio icono="sol" titulo="Todavía no tiene clientes" texto="Añádelos con «Nuevo cliente»: empiezan en la fase «Cálculo de CAEs»." />
+        </div>
       ) : (
-        <div className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-3 lg:mx-0 lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-5 lg:grid-rows-[minmax(0,1fr)] lg:overflow-visible lg:px-0 lg:pb-0">
+        // Las fases sin clientes se quedan en una tira estrecha y las demás se reparten el ancho; cada fase se desplaza por dentro.
+        <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-3 lg:mx-0 lg:grid lg:min-h-0 lg:flex-1 lg:grid-rows-[minmax(0,1fr)] lg:overflow-visible lg:px-0 lg:pb-0 lg:[grid-template-columns:var(--plantilla)]"
+          style={{ ["--plantilla" as string]: FASES.map((_, f) => (lista.some((c) => c.fase === f) ? "minmax(0,1fr)" : "3.25rem")).join(" ") }}>
           {FASES.map((nombreFase, fase) => {
             const enFase = lista.filter((c) => c.fase === fase);
+            if (enFase.length === 0) {
+              return (
+                <section key={nombreFase} aria-label={`${nombreFase}: sin clientes`} className="flex w-[3.25rem] shrink-0 flex-col items-center gap-3 rounded-[18px] bg-soft py-3 lg:w-auto">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: FASE_COLOR[fase] }} />
+                  <span className="rounded-full bg-panel px-2 text-xs font-bold shadow-card">0</span>
+                  <span className="text-xs font-bold text-muted" style={{ writingMode: "vertical-rl" }}>{nombreFase}</span>
+                </section>
+              );
+            }
             return (
-              <section key={nombreFase} aria-label={nombreFase} className="min-w-[17.5rem] snap-start rounded-[18px] bg-soft p-3 lg:flex lg:min-h-0 lg:min-w-0 lg:flex-col">
+              <section key={nombreFase} aria-label={nombreFase} className="min-w-[17.5rem] shrink-0 snap-start rounded-[18px] bg-soft p-3 lg:flex lg:min-h-0 lg:min-w-0 lg:flex-col">
                 <h2 className="mb-2 flex shrink-0 items-center justify-between gap-2 px-1.5 text-sm font-bold">
                   <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full" style={{ background: FASE_COLOR[fase] }} />{nombreFase}</span>
                   <span className="rounded-full bg-panel px-2.5 text-xs font-bold shadow-card">{enFase.length}</span>
                 </h2>
-                <ul className="space-y-2.5 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-0.5">
-                  {enFase.length === 0 && <li className="rounded-xl border border-dashed border-line p-4 text-center text-xs text-faint">Sin clientes</li>}
+                <ul className="grid content-start gap-2.5 [grid-template-columns:repeat(auto-fill,minmax(16rem,1fr))] lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
                   {enFase.map((c) => (
-                    <li key={c.id} className="rounded-xl bg-panel p-3 text-sm shadow-card transition duration-200 hover:shadow-lift" style={{ borderLeft: `4px solid ${FASE_COLOR[fase]}` }}>
-                      <p className="font-bold leading-tight">{c.nombre}</p>
-                      <FormAviso action={guardarMwh} className="mt-2 flex items-end gap-1.5">
-                        <input type="hidden" name="id" value={c.id} />
-                        <div className="flex-1"><label className="text-xs text-muted" htmlFor={`mwh-${c.id}`}>MWh</label><input id={`mwh-${c.id}`} name="mwh" inputMode="decimal" defaultValue={c.mwh ?? ""} className="input !py-1 font-mono" /></div>
-                        <button className="btn btn-ghost !px-3 !py-1">Guardar</button>
-                      </FormAviso>
-                      <FormAviso action={guardarPct} className="mt-1.5 flex items-end gap-1.5">
-                        <input type="hidden" name="id" value={c.id} />
-                        <div className="flex-1"><label className="text-xs text-muted" htmlFor={`pct-${c.id}`}>% del colaborador</label><input id={`pct-${c.id}`} name="pct" inputMode="decimal" defaultValue={c.pct} className="input !py-1 font-mono" /></div>
-                        <button className="btn btn-ghost !px-3 !py-1">Guardar</button>
-                      </FormAviso>
-                      <dl className="mt-2 flex items-baseline justify-between gap-2 border-t border-line pt-2 text-xs text-muted">
-                        <div>Valor <span className="font-mono tabular-nums">{eur((c.mwh ?? 0) * VALOR_MWH)}</span></div>
-                        <div>Comisión <span className="num text-base text-ink">{eur((c.mwh ?? 0) * VALOR_MWH * c.pct / 100)}</span></div>
-                      </dl>
-                      {c.pago === "requested" && <p className="mt-2 rounded-lg bg-sun-50 px-2.5 py-1 text-xs font-bold text-sun-700">Pago solicitado el {fecha(c.solicitado_at)}</p>}
-                      {c.pago === "paid" && <p className="mt-2 rounded-lg bg-batt-50 px-2.5 py-1 text-xs font-bold text-batt-700">Pagado el {fecha(c.pagado_at)}</p>}
-                      <div className="mt-2 flex items-center gap-1.5">
-                        <FormAviso action={moverFase}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="-1" /><button disabled={fase === 0} aria-label="Volver a la fase anterior" className="btn btn-ghost !px-3 !py-1">←</button></FormAviso>
-                        <FormAviso action={moverFase}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="1" /><button disabled={fase === 4} aria-label="Pasar a la fase siguiente" className="btn btn-ghost !px-3 !py-1">→</button></FormAviso>
-                        {fase === 4 && c.pago !== "paid" && (
-                          <FormAviso action={marcarPagado} className="min-w-0 flex-1"><input type="hidden" name="id" value={c.id} /><button className="btn btn-primary w-full !px-3 !py-1">Marcar pagado</button></FormAviso>
-                        )}
-                      </div>
-                    </li>
+                    <TarjetaCliente key={c.id} c={{ id: c.id, nombre: c.nombre, fase: c.fase, mwh: c.mwh, pct: c.pct, pago: c.pago, solicitado_at: c.solicitado_at, pagado_at: c.pagado_at, comision: comision(c) }} />
                   ))}
                 </ul>
               </section>
