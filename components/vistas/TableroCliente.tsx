@@ -23,7 +23,7 @@ export function TableroCliente({ col, clientes, verArchivados }: { col: Profile;
   const meses = ultimosMeses(6);
   const porMes = meses.map((m) => suma(pagados.filter((c) => claveMes(c.pagado_at) === m.clave)));
   return (
-    // En escritorio todo cabe en una pantalla: cabecera, pagos y alta de clientes arriba; el tablero ocupa el resto y cada columna se desplaza por dentro.
+    // En escritorio todo cabe en una pantalla: cabecera y pagos (con el alta de clientes) arriba; el tablero ocupa el resto y cada columna se desplaza por dentro.
     <div className="space-y-4 lg:flex lg:h-[calc(100dvh-5.75rem)] lg:min-h-[34rem] lg:flex-col lg:gap-4 lg:space-y-0">
       <div className="tarjeta flex shrink-0 flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -39,7 +39,7 @@ export function TableroCliente({ col, clientes, verArchivados }: { col: Profile;
         </div>
       </div>
 
-      <section aria-labelledby="pagos" className="grid shrink-0 gap-4 lg:grid-cols-[1fr_1.7fr_1fr]">
+      <section aria-labelledby="pagos" className={`grid shrink-0 gap-4 sm:grid-cols-2 ${verArchivados ? "lg:grid-cols-[1fr_1.7fr_1fr]" : "lg:grid-cols-[1fr_1.6fr_1fr_1fr]"}`}>
         <Kpi tono="marca" compacto etiqueta="Pagado hasta hoy" valor={eur(totalPagado)}
           nota={pagados.length ? `${pagados.length} pago${pagados.length > 1 ? "s" : ""} realizado${pagados.length > 1 ? "s" : ""}. Último: ${fecha(pagados[0].pagado_at)}` : "Todavía no se le ha pagado ningún cliente"} />
         <div className="tarjeta p-4">
@@ -75,7 +75,7 @@ export function TableroCliente({ col, clientes, verArchivados }: { col: Profile;
           </div>
           {pagados.length === 0
             ? <p className="rounded-xl bg-soft p-4 text-center text-sm text-muted">Cuando marques un cliente como pagado, aparecerá aquí.</p>
-            : <Barras lg={{ W: 640, H: 105 }} titulo="Importe pagado a este colaborador por mes" meses={meses.map((m) => m.etiqueta)} series={[{ nombre: "Pagado", color: "#0EA394", valores: porMes }]} formato={eur0} />}
+            : <Barras lg={{ W: 470, H: 110 }} titulo="Importe pagado a este colaborador por mes" meses={meses.map((m) => m.etiqueta)} series={[{ nombre: "Pagado", color: "#0EA394", valores: porMes }]} formato={eur0} />}
         </div>
         <dl className="tarjeta grid grid-cols-2 divide-x divide-line lg:grid-cols-1 lg:divide-x-0 lg:divide-y">
           <div className="flex flex-col justify-center px-5 py-3">
@@ -89,18 +89,16 @@ export function TableroCliente({ col, clientes, verArchivados }: { col: Profile;
             <p className="text-xs text-muted">{enTramitacion.length} cliente{enTramitacion.length === 1 ? "" : "s"} sin CAE expedido</p>
           </div>
         </dl>
-      </section>
-
-      {!verArchivados && (
-        <FormEstado action={crearCliente} className="tarjeta shrink-0 px-4 py-3">
-          <input type="hidden" name="colaborador_id" value={id} />
-          <label className="mb-1.5 block text-sm font-bold" htmlFor="nombre">Nuevo cliente</label>
-          <div className="flex gap-2">
+        {!verArchivados && (
+          <FormEstado action={crearCliente} className="tarjeta flex flex-col justify-center gap-2 px-4 py-3">
+            <input type="hidden" name="colaborador_id" value={id} />
+            <label className="text-sm font-bold" htmlFor="nombre">Nuevo cliente</label>
+            <p className="text-xs text-muted">Se añade en la fase «Cálculo de CAEs».</p>
             <input id="nombre" name="nombre" required maxLength={200} className="input !py-1.5" placeholder="Nombre o razón social" />
-            <Submit className="btn-primary shrink-0 !px-4 !py-1.5" pendiente="Añadiendo…">Añadir cliente</Submit>
-          </div>
-        </FormEstado>
-      )}
+            <Submit className="btn-primary w-full !py-1.5" pendiente="Añadiendo…">Añadir cliente</Submit>
+          </FormEstado>
+        )}
+      </section>
 
       {verArchivados ? (
         <ul className="grid content-start gap-4 sm:grid-cols-2 lg:min-h-0 lg:flex-1 lg:grid-cols-3 lg:overflow-y-auto">
