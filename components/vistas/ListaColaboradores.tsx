@@ -28,6 +28,21 @@ export function ListaColaboradores({ filas, tot, conteos, q, f, esAdmin, meses, 
         </div>
       </div>
 
+      <section className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
+        <div className="tarjeta p-6">
+          <h2 className="mb-3 font-bold">Recorrido de todos los clientes activos</h2>
+          {tot.n === 0 ? <p className="rounded-xl bg-soft p-4 text-sm text-muted">Todavía no hay clientes activos.</p> : <Embudo conteos={conteos} />}
+        </div>
+        <Kpi tono="marca" etiqueta="Comisión por pagar" valor={eur0(tot.porCobrar)}
+          nota={tot.pend > 0 ? `${tot.pend} pago${tot.pend > 1 ? "s" : ""} solicitado${tot.pend > 1 ? "s" : ""} por los colaboradores` : "Ningún pago solicitado ahora mismo"} />
+      </section>
+
+      <KpiFila items={[
+        { etiqueta: "Clientes activos", valor: String(tot.n) },
+        { tono: "sun", etiqueta: "Pagos solicitados", valor: String(tot.pend) },
+        { tono: "net", etiqueta: "Valor CAE en curso", valor: eur0(tot.valor) },
+      ]} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filtro">
           {FILTROS.map(([k, t]) => (
@@ -66,21 +81,6 @@ export function ListaColaboradores({ filas, tot, conteos, q, f, esAdmin, meses, 
           </li>
         ))}
       </ul>
-      <section className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
-        <div className="tarjeta p-6">
-          <h2 className="mb-3 font-bold">Recorrido de todos los clientes activos</h2>
-          {tot.n === 0 ? <p className="rounded-xl bg-soft p-4 text-sm text-muted">Todavía no hay clientes activos.</p> : <Embudo conteos={conteos} />}
-        </div>
-        <Kpi tono="marca" etiqueta="Comisión por pagar" valor={eur0(tot.porCobrar)}
-          nota={tot.pend > 0 ? `${tot.pend} pago${tot.pend > 1 ? "s" : ""} solicitado${tot.pend > 1 ? "s" : ""} por los colaboradores` : "Ningún pago solicitado ahora mismo"} />
-      </section>
-
-      <KpiFila items={[
-        { etiqueta: "Clientes activos", valor: String(tot.n) },
-        { tono: "sun", etiqueta: "Pagos solicitados", valor: String(tot.pend) },
-        { tono: "net", etiqueta: "Valor CAE en curso", valor: eur0(tot.valor) },
-      ]} />
-
       <section className="tarjeta p-5 sm:p-6">
         <p className="eyebrow">Evolución</p>
         <h2 className="mb-1 text-2xl font-bold">Avances de fase, mes a mes</h2>
