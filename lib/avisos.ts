@@ -1,10 +1,11 @@
 import { createServiceClient } from "@/lib/supabase/server";
-import { construirCorreo, enviarCorreo, leerConfig } from "@/lib/correo";
+import { construirCorreo, elegirDestinatarios, enviarCorreo, leerConfig } from "@/lib/correo";
 
 /** Minutos mínimos entre dos avisos del mismo colaborador: una ráfaga de mensajes genera un solo correo. */
 const MINUTOS_ENTRE_AVISOS = 10;
 const SITIO = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://plataforma-iner-cae.vercel.app").replace(/\/$/, "");
-const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Segundos que cuenta un latido: se envía cada 25 s mientras la conversación está abierta y a la vista. */
+const SEGUNDOS_PRESENCIA = 60;
 
 /**
  * Avisa por correo a las cuentas de administrador de que un colaborador ha escrito. Nunca lanza errores: si el aviso
@@ -16,8 +17,13 @@ export async function avisarMensajeNuevo(colaboradorId: string, nombre: string):
   if (!config) return;
   try {
     const db = createServiceClient();
-    const { data: admins } = await db.from("profiles").select("email").eq("rol", "admin");
-    const destinatarios = [...new Set((admins ?? []).map((a) => a.email.trim().toLowerCase()).filter((e) => CORREO_VALIDO.test(e)))];
+    const { data: admins } = await db.from("profiles").select("id,email").eq("rol", "admin");
+    // Quien está ahora mismo en el portal con la conversación de este colaborador abierta ya lo ve: no se le escribe.
+    // Si no se puede consultar, se avisa a todos (mejor un correo de más que un mensaje sin ver).
+    const { data: latidos } = await db.from("presencia_staff").select("staff_id").eq("colaborador_id", colaboradorId)
+      .gte("visto_at", new Date(Date.now() - SEGUNDOS_PRESENCIA * 1000).toISOString());
+    const destinatarios = elegirDestinatarios(admins ?? [], new Set((latidos ?? []).map((l) => l.staff_id)));
+    // Si nadie queda por avisar, no se gasta la reserva de los 10 minutos: el siguiente mensaje sí podrá avisar.
     if (destinatarios.length === 0) return;
     const { data: toca, error } = await db.rpc("reclamar_aviso_mensaje", { p_colaborador: colaboradorId, p_minutos: MINUTOS_ENTRE_AVISOS });
     if (error || toca !== true) return;

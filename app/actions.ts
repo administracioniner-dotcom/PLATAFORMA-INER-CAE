@@ -115,6 +115,18 @@ export async function marcarLeidos(colaboradorId: string, clienteId: string | nu
   await q;
 }
 
+/** Latido del equipo: indica que está viendo la conversación con este colaborador (para no avisarle por correo de lo que ya ve). */
+export async function latirPresencia(colaboradorId: string): Promise<void> {
+  const { user, profile } = await getSessionProfile();
+  if (!user || !profile || profile.rol === "colaborador" || !esUuid(colaboradorId)) return;
+  try {
+    await createServiceClient().from("presencia_staff").upsert(
+      { staff_id: user.id, colaborador_id: colaboradorId, visto_at: new Date().toISOString() },
+      { onConflict: "staff_id,colaborador_id" },
+    );
+  } catch { /* es complementario */ }
+}
+
 /* ---------- Equipo (delegado / admin) ---------- */
 async function soloStaff() {
   const s = await getSessionProfile();

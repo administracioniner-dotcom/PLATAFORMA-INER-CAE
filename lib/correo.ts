@@ -50,3 +50,13 @@ export async function enviarCorreo(cfg: ConfigCorreo, destinatarios: string[], c
     return false;
   }
 }
+
+/** A quién se escribe: los administradores con correo válido, sin repetir y sin quien ya está atendiendo a ese colaborador en el portal. */
+export function elegirDestinatarios(admins: { id: string; email: string }[], presentes: ReadonlySet<string>): string[] {
+  const valido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const correos = admins
+    .filter((a) => !presentes.has(a.id))
+    .map((a) => a.email.trim().toLowerCase())
+    .filter((e) => valido.test(e));
+  return [...new Set(correos)];
+}

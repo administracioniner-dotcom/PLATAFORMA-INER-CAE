@@ -19,7 +19,8 @@ No se usa el correo para dar de alta ni para recuperar contraseñas:
 ## Avisos de mensajes nuevos
 Cuando un colaborador escribe en el portal, las cuentas de **administrador** reciben un correo sencillo: «Mensaje nuevo de [colaborador]» con un enlace a la conversación (no incluye el texto del mensaje).
 - **Destinatarios:** el correo de cada cuenta con rol administrador (tabla `profiles`); si entra un administrador nuevo, lo recibe sin tocar nada.
-- **Agrupado:** como máximo un correo cada 10 minutos por colaborador; una ráfaga de mensajes genera uno solo (`lib/avisos.ts`, tabla `avisos_mensajes`).
+- **Si ya estás en el portal, no hay correo:** mientras un administrador tiene abierta la conversación con ese colaborador (pestaña a la vista y ventana en primer plano), su navegador avisa cada 25 s (`presencia_staff`) y no se le escribe. Si están los dos, no se manda nada. A quien está fuera, o en otra pantalla del portal, sí le llega. Si no se puede consultar la presencia, se avisa a todos.
+- **Agrupado:** como máximo un correo cada 10 minutos por colaborador; una ráfaga de mensajes genera uno solo (`lib/avisos.ts`, tabla `avisos_mensajes`). Si nadie queda por avisar, no se gasta ese plazo.
 - **No avisa** de los mensajes del equipo ni de los avisos automáticos del sistema.
 - **Configurarlo:** variables de entorno en Vercel (Production) y nuevo despliegue. Sin ellas, no se envía nada.
 

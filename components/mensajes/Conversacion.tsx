@@ -3,6 +3,7 @@ import { Compositor, type Sugerencia } from "@/components/mensajes/Compositor";
 import { FlujoMensajes } from "@/components/mensajes/FlujoMensajes";
 import { Iniciales } from "@/components/mensajes/Iniciales";
 import { MarcarLeidos } from "@/components/mensajes/MarcarLeidos";
+import { PresenciaEquipo } from "@/components/mensajes/PresenciaEquipo";
 import { evento } from "@/lib/mensajes";
 import { cx, diaClave, etiquetaDia, hora } from "@/lib/utils";
 import type { Mensaje } from "@/lib/types";
@@ -107,6 +108,7 @@ export function Conversacion({ cabecera, extra, mensajes, colaboradorId, cliente
       {cabecera}
       {extra}
       <MarcarLeidos colaboradorId={colaboradorId} clienteId={clienteId} pendientes={pendientes} />
+      {yo === "delegado" && <PresenciaEquipo colaboradorId={colaboradorId} />}
       <FlujoMensajes clave={clave} ultimoId={ultimo?.id ?? null} ultimoMio={ultimo ? ultimo.remitente === yo : false}>
         {mensajes.length === 0
           ? <p className="mx-auto mt-16 max-w-xs text-center text-sm text-muted">{vacio}</p>
