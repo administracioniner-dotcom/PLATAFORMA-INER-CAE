@@ -20,6 +20,7 @@ No se usa el correo para dar de alta ni para recuperar contraseñas:
 - **RLS en todas las tablas** y permisos mínimos para el rol `authenticated` (sin `TRUNCATE`, sin escritura en vistas ni en auditoría). Los colaboradores solo ven y tocan lo suyo; crear clientes, cambiar fase, MWh, % y marcar pagos es solo del equipo.
 - **El navegador nunca habla con Supabase:** todo pasa por el servidor. No hay clientes de Supabase en el frontend, ni `localStorage`, ni contraseñas o tokens en JavaScript. Las cookies de sesión son `httpOnly`.
 - **Cabeceras:** CSP estricta, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS (ver `next.config.mjs`).
+- **Límite de intentos de acceso** (`lib/intentos.ts`, tabla `intentos_login`): 5 fallos por cuenta desde una misma IP, 20 por IP o 30 por cuenta (ataque distribuido) en 15 minutos bloquean nuevos intentos. Se cuenta con la IP real del visitante porque Supabase, al recibir el login desde Vercel, no la ve. Los fallos se borran a los 7 días.
 - **Validación en el servidor** de todos los datos de entrada (longitudes, formatos, rangos) en `app/actions.ts`.
 - La exportación a Excel neutraliza fórmulas (`=`, `+`, `-`, `@`).
 

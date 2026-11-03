@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/auth";
+import { MENSAJE_BLOQUEO, ipDelCliente, limpiarFallos, loginBloqueado, registrarFallo } from "@/lib/intentos";
 
 export type Estado = { error?: string; ok?: string } | undefined;
 
@@ -39,9 +40,16 @@ export async function iniciarSesion(_: Estado, fd: FormData): Promise<Estado> {
   const password = String(fd.get("password") ?? "");
   if (!email || !password) return { error: "Escribe tu correo y tu contraseña." };
   if (email.length > 254 || password.length > 200) return { error: "Correo o contraseña incorrectos." };
+  // Límite de intentos: se aplica igual exista o no la cuenta, para no revelar qué correos están registrados.
+  const ip = await ipDelCliente();
+  if (await loginBloqueado(email, ip)) return { error: MENSAJE_BLOQUEO };
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: "Correo o contraseña incorrectos." };
+  if (error) {
+    await registrarFallo(email, ip);
+    return { error: "Correo o contraseña incorrectos." };
+  }
+  await limpiarFallos(email, ip);
   // El rol lo decide el servidor según la cuenta, no la URL por la que entró.
   const { profile } = await getSessionProfile();
   if (!profile) {
@@ -262,8 +270,16 @@ export async function cambiarMiContrasena(_: Estado, fd: FormData): Promise<Esta
   if (problema) return { error: problema.replace("La contraseña", "La contraseña nueva") };
   if (p1 !== p2) return { error: "Las dos contraseñas nuevas no coinciden." };
   if (p1 === actual) return { error: "La contraseña nueva debe ser distinta de la actual." };
+  // Comprobar la contraseña actual es también una vía para probar contraseñas con una sesión robada: mismo límite.
+  const ip = await ipDelCliente();
+  const clave = user.email.toLowerCase();
+  if (await loginBloqueado(clave, ip)) return { error: MENSAJE_BLOQUEO };
   const { error: e1 } = await supabase.auth.signInWithPassword({ email: user.email, password: actual });
-  if (e1) return { error: "La contraseña actual no es correcta." };
+  if (e1) {
+    await registrarFallo(clave, ip);
+    return { error: "La contraseña actual no es correcta." };
+  }
+  await limpiarFallos(clave, ip);
   const { error: e2 } = await supabase.auth.updateUser({ password: p1 });
   if (e2) return { error: "No se pudo cambiar la contraseña. Prueba con otra." };
   return { ok: "Contraseña cambiada" };
