@@ -1,8 +1,10 @@
 "use server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/auth";
+import { avisarMensajeNuevo } from "@/lib/avisos";
 import { MENSAJE_BLOQUEO, ipDelCliente, limpiarFallos, loginBloqueado, registrarFallo } from "@/lib/intentos";
 
 export type Estado = { error?: string; ok?: string } | undefined;
@@ -95,6 +97,8 @@ export async function enviarMensaje(fd: FormData): Promise<Estado> {
     es_sistema: false,
   });
   if (error) return { error: "No se pudo enviar el mensaje." };
+  // Cuando escribe un colaborador, avisa al equipo (después de responder, sin retrasar el envío).
+  if (profile.rol === "colaborador") after(() => avisarMensajeNuevo(user.id, profile.nombre ?? profile.email));
   revalidatePath("/mensajes");
   revalidatePath("/equipo/mensajes");
 }
