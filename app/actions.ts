@@ -223,6 +223,47 @@ export async function crearCuenta(_: Estado, fd: FormData): Promise<Estado> {
   return { ok: `Cuenta creada para ${email}. Ya puede entrar con esa contraseña.` };
 }
 
+/** Desactiva o reactiva una cuenta: no puede entrar, pero se conservan sus clientes, pagos y mensajes. */
+export async function cambiarEstadoCuenta(_: Estado, fd: FormData): Promise<Estado> {
+  const { user, profile } = await getSessionProfile();
+  if (!user || profile?.rol !== "admin") return { error: "Solo un administrador puede hacerlo." };
+  const id = texto(fd, "id");
+  const activar = texto(fd, "accion") === "reactivar";
+  if (!esUuid(id)) return { error: "Falta la cuenta." };
+  if (id === user.id) return { error: "No puedes desactivar tu propia cuenta." };
+  const { error } = await createServiceClient().auth.admin.updateUserById(id, { ban_duration: activar ? "none" : "876000h" });
+  if (error) return { error: "No se pudo cambiar el estado de la cuenta." };
+  await auditar(user.id, activar ? "CUENTA_REACTIVADA" : "CUENTA_DESACTIVADA", id);
+  revalidatePath("/equipo/invitar");
+  revalidatePath("/equipo");
+  return { ok: activar ? "Cuenta reactivada. Ya puede entrar." : "Cuenta desactivada. No puede entrar; sus datos se conservan." };
+}
+
+/** Elimina una cuenta para siempre, con sus clientes, historial y mensajes. Exige escribir el correo para confirmar. */
+export async function eliminarCuenta(_: Estado, fd: FormData): Promise<Estado> {
+  const { supabase, user, profile } = await getSessionProfile();
+  if (!user || profile?.rol !== "admin") return { error: "Solo un administrador puede eliminar cuentas." };
+  const id = texto(fd, "id");
+  if (!esUuid(id)) return { error: "Falta la cuenta." };
+  if (id === user.id) return { error: "No puedes eliminar tu propia cuenta." };
+  const { data: objetivo } = await supabase.from("profiles").select("id,email,rol").eq("id", id).maybeSingle();
+  if (!objetivo) return { error: "La cuenta ya no existe." };
+  if (texto(fd, "confirmar").toLowerCase() !== objetivo.email.toLowerCase()) return { error: "Escribe el correo exacto de la cuenta para confirmar." };
+  const admin = createServiceClient();
+  const { count: clientes } = await admin.from("clientes").select("id", { count: "exact", head: true }).eq("colaborador_id", id);
+  const { count: pagados } = await admin.from("clientes").select("id", { count: "exact", head: true }).eq("colaborador_id", id).eq("pago", "paid");
+  // clientes.colaborador_id es RESTRICT: primero sus clientes (arrastran historial y mensajes), luego la cuenta (arrastra perfil y mensajes).
+  const { error: e1 } = await admin.from("clientes").delete().eq("colaborador_id", id);
+  if (e1) return { error: "No se pudieron borrar los clientes de la cuenta. No se ha eliminado nada más." };
+  const { error: e2 } = await admin.auth.admin.deleteUser(id);
+  if (e2) return { error: "No se pudo eliminar la cuenta. Inténtalo de nuevo." };
+  await admin.from("invitaciones").delete().eq("email", objetivo.email);
+  await auditar(user.id, "CUENTA_ELIMINADA", id, { email: objetivo.email, rol: objetivo.rol, clientes: clientes ?? 0, clientes_pagados: pagados ?? 0 });
+  revalidatePath("/equipo/invitar");
+  revalidatePath("/equipo");
+  return { ok: "Cuenta eliminada." };
+}
+
 /* ---------- Perfil (cualquier cuenta) ---------- */
 /** Cambia el nombre propio. Los colaboradores no pueden: es la identidad con la que se les paga, y lo cambia INER. */
 export async function guardarNombre(_: Estado, fd: FormData): Promise<Estado> {
