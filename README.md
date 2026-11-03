@@ -1,35 +1,30 @@
-# Portal de Colaboradores CAE · INER
+# Portal de colaboradores CAE · INER
 
-Next.js 15 + Tailwind + Supabase (proyecto `portal-colaboradores-cae`, Frankfurt). Sin n8n.
+Next.js 15 + Tailwind + Supabase (proyecto `portal-colaboradores-cae`, Fráncfort), desplegado en Vercel.
 
 ## Variables de entorno (Vercel → Settings → Environment Variables)
 | Variable | Valor |
 |---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://iuaevuahydpzzpbwivzw.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_4YRkbrwF9LhPgNlHlfPEkg_SrNyemEb` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API Keys → *secret*. Solo servidor, nunca en el código. Marcar como Sensitive. |
-| `NEXT_PUBLIC_SITE_URL` | URL del portal, p. ej. `https://xxx.vercel.app` (sin barra final) |
-
-## Configuración en Supabase (una vez)
-1. **Authentication → URL Configuration:** Site URL = la URL del portal. Redirect URLs: `https://TU-URL/auth/confirm`.
-2. **Authentication → Sign In / Providers:** desactivar *Allow new users to sign up*.
-3. **Authentication → Email Templates.** Cambiar el enlace de cada plantilla para que apunte al portal:
-   - *Invite user*: `<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=invite&next=/crear-contrasena">Crear mi contraseña</a>`
-   - *Reset password*: `<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/crear-contrasena">Crear contraseña nueva</a>`
-4. **Authentication → SMTP Settings:** SMTP propio (p. ej. Resend) para enviar desde el dominio de INER.
+| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto de Supabase. |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave pública (*publishable*) de Supabase. Es pública por diseño: la seguridad la dan las políticas RLS. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API Keys → *secret*. **Solo servidor, nunca en el código.** Marcar como *Sensitive*. |
 
 ## Cuentas
 No se usa el correo para dar de alta ni para recuperar contraseñas:
 - Un administrador crea cada cuenta en `/equipo/invitar` ("Crear colaborador") con correo, contraseña y rol, y se la entrega a la persona.
-- Si alguien olvida la contraseña, el administrador la cambia desde esa misma pantalla (lista "Cuentas") o desde la ficha del colaborador.
-- Primer administrador: `jose.gutierrez@iner.es` ya tiene cuenta. Para `laura.garcia@iner.es`, créala desde "Crear colaborador" con rol Administrador.
-- Las rutas `/recuperar`, `/crear-contrasena` y `/auth/confirm` siguen en el código por si se activa más adelante el envío de correos (requiere SMTP propio, ver arriba), pero no se enlazan desde la interfaz.
+- Si alguien olvida la contraseña, el administrador la cambia desde esa misma pantalla (lista "Cuentas") o desde la ficha del colaborador. Cada cuenta puede cambiar la suya desde "Mi perfil".
+- El alta y el cambio de contraseña por un administrador quedan en `audit_log` (sin guardar nunca la contraseña).
+
+## Seguridad
+- **Registro cerrado en la base de datos:** el disparador `handle_new_user` solo crea perfiles para cuentas con `app_metadata.creada_por_admin = true`, algo que solo se puede escribir con la clave de servidor. El registro público de Supabase no puede crear cuentas aunque esté activo. Recomendado además: Authentication → Sign In / Providers → desactivar *Allow new users to sign up*.
+- **RLS en todas las tablas** y permisos mínimos para el rol `authenticated` (sin `TRUNCATE`, sin escritura en vistas ni en auditoría). Los colaboradores solo ven y tocan lo suyo; crear clientes, cambiar fase, MWh, % y marcar pagos es solo del equipo.
+- **El navegador nunca habla con Supabase:** todo pasa por el servidor. No hay clientes de Supabase en el frontend, ni `localStorage`, ni contraseñas o tokens en JavaScript. Las cookies de sesión son `httpOnly`.
+- **Cabeceras:** CSP estricta, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS (ver `next.config.mjs`).
+- **Validación en el servidor** de todos los datos de entrada (longitudes, formatos, rangos) en `app/actions.ts`.
+- La exportación a Excel neutraliza fórmulas (`=`, `+`, `-`, `@`).
 
 ## Rutas
-- Colaborador: `/login`, `/` (mis clientes, solo lectura y solicitar pago), `/mensajes`
-- Equipo: `/equipo/login`, `/equipo`, `/equipo/colaboradores/[id]` (aquí se dan de alta los clientes), `/equipo/mensajes`, `/equipo/invitar` (solo admin)
-- Enlaces de correo: `/auth/confirm`, `/crear-contrasena`, `/recuperar`
-
-**Los clientes los crea solo el equipo** (delegado o admin), desde la ficha de cada colaborador. Los colaboradores no pueden crearlos: lo impide la política RLS `clientes_insert` (`es_staff()`).
+- Colaborador: `/login`, `/` (panel), `/mensajes`, `/perfil`, `/soporte`
+- Equipo: `/equipo/login`, `/equipo`, `/equipo/colaboradores/[id]` (alta de clientes y pagos), `/equipo/mensajes`, `/equipo/perfil`, `/equipo/invitar` (solo admin), `/equipo/exportar` (CSV para Excel)
 
 El rol siempre lo decide el servidor según la cuenta (tabla `profiles`), no la URL.

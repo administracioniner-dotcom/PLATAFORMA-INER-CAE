@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLICAS = ["/login", "/equipo/login", "/recuperar", "/auth"];
+const PUBLICAS = ["/login", "/equipo/login"];
 
 export async function middleware(req: NextRequest) {
   let res = NextResponse.next({ request: req });
@@ -14,7 +14,8 @@ export async function middleware(req: NextRequest) {
         setAll: (list: { name: string; value: string; options: CookieOptions }[]) => {
           list.forEach(({ name, value }) => req.cookies.set(name, value));
           res = NextResponse.next({ request: req });
-          list.forEach(({ name, value, options }) => res.cookies.set(name, value, options));
+          // La sesión solo la lee el servidor (no hay cliente de Supabase en el navegador): httpOnly evita que un XSS la robe.
+          list.forEach(({ name, value, options }) => res.cookies.set(name, value, { ...options, httpOnly: true, secure: process.env.NODE_ENV === "production" }));
         },
       },
     }
@@ -34,4 +35,4 @@ export async function middleware(req: NextRequest) {
   return res;
 }
 
-export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|webp|ico)$).*)"] };
+export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|.*\\.(?:svg|png|jpg|jpeg|webp|ico)$).*)"] };

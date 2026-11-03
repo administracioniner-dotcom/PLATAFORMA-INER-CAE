@@ -3,7 +3,9 @@ import { FASES, VALOR_MWH } from "@/lib/utils";
 import type { ClienteStaff, Profile } from "@/lib/types";
 
 const PAGO = { none: "Sin solicitar", requested: "Solicitado", paid: "Pagado" } as const;
-const celda = (v: string | number | null) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+// Un texto que empiece por = + - @ lo ejecutaría Excel como fórmula; se antepone una comilla para que sea solo texto.
+const seguro = (s: string) => (/^[=+\-@\t\r]/.test(s) ? `'${s}` : s);
+const celda = (v: string | number | null) => `"${seguro(String(v ?? "")).replace(/"/g, '""')}"`;
 const decimal = (n: number | null) => (n == null ? "" : String(n).replace(".", ","));
 const dia = (s: string | null) => (s ? s.slice(0, 10) : "");
 

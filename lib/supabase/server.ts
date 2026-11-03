@@ -11,7 +11,7 @@ export async function createClient() {
       cookies: {
         getAll: () => store.getAll(),
         setAll: (list: { name: string; value: string; options: CookieOptions }[]) => {
-          try { list.forEach(({ name, value, options }) => store.set(name, value, options)); } catch { /* RSC: lo gestiona el middleware */ }
+          try { list.forEach(({ name, value, options }) => store.set(name, value, { ...options, httpOnly: true, secure: process.env.NODE_ENV === "production" })); } catch { /* RSC: lo gestiona el middleware */ }
         },
       },
     }
