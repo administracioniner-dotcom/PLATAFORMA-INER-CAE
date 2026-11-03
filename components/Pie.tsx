@@ -2,7 +2,7 @@
 export function Pie() {
   return (
     <footer className="mt-12 border-t border-line bg-panel">
-      <div className="mx-auto flex max-w-7xl flex-wrap justify-between gap-x-10 gap-y-6 px-4 py-8 text-sm">
+      <div className="contenedor flex flex-wrap justify-between gap-x-10 gap-y-6 py-8 text-sm">
         <p className="max-w-xs text-muted">Soluciones energéticas para empresas e industria que ayudan a reducir costes y mejorar la eficiencia.</p>
         <address className="space-y-1 not-italic text-muted">
           <p className="font-bold text-ink">Contacto</p>

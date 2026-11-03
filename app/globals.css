@@ -38,3 +38,6 @@ body { @apply bg-bg text-ink antialiased; }
 
 /* Variante sin desvanecer, para fondos oscuros. */
 .resalte.resalte-solido { background: #EA5409; }
+
+/* Ancho común de cabecera, contenido y pie: ocupa la pantalla con un margen lateral que crece con ella. */
+.contenedor { @apply mx-auto w-full max-w-[110rem] px-4 sm:px-6 lg:px-10; }

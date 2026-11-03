@@ -17,7 +17,8 @@ export function Barras(p: Props) {
   return (
     <figure>
       <div className="sm:hidden"><Dibujo {...p} W={340} H={230} clase="w-full" /></div>
-      <div className="hidden sm:block"><Dibujo {...p} W={600} H={220} clase="mx-auto w-full max-w-3xl" /></div>
+      <div className="hidden sm:block lg:hidden"><Dibujo {...p} W={600} H={220} clase="w-full" /></div>
+      <div className="hidden lg:block"><Dibujo {...p} W={1100} H={260} clase="w-full" /></div>
       {series.length > 1 && (
         <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
           {series.map((s) => <li key={s.nombre} className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />{s.nombre}</li>)}

@@ -14,7 +14,7 @@ export function Cabecera({ nombre, rol, enlaces }: { nombre: string; rol?: strin
   const activo = (href: string) => (enlaces.some((e) => e.href !== href && e.href.startsWith(href + "/")) ? ruta === href : ruta === href || ruta.startsWith(href + "/"));
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-bg/85 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2.5">
+      <div className="contenedor flex flex-wrap items-center gap-x-6 gap-y-2 py-2.5">
         <Link href={enlaces[0].href} aria-label="Inicio" className="shrink-0"><Marca className="h-9" /></Link>
         <nav aria-label="Principal" className="order-last flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
           {enlaces.map((e) => (
