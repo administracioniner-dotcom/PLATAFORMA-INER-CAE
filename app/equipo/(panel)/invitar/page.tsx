@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { crearCuenta, restablecerContrasena } from "@/app/actions";
+import { cambiarNombreDeCuenta, crearCuenta, restablecerContrasena } from "@/app/actions";
 import { CampoContrasena } from "@/components/CampoContrasena";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
@@ -41,12 +41,25 @@ export default async function Invitar() {
                   <span className="text-muted">{ROLES[p.rol]} · {p.estado === "activo" ? "Activo" : "Aún no ha entrado"}</span>
                 </div>
                 <details className="mt-2">
-                  <summary className="w-fit cursor-pointer text-xs font-semibold text-net-700 underline underline-offset-2">Cambiar contraseña</summary>
-                  <FormEstado action={restablecerContrasena} className="mt-3 max-w-md space-y-3">
-                    <input type="hidden" name="colaborador_id" value={p.id} />
-                    <CampoContrasena id={`pw-${p.id}`} />
-                    <Submit className="btn-primary !py-1.5" pendiente="Guardando…">Guardar contraseña</Submit>
-                  </FormEstado>
+                  <summary className="w-fit cursor-pointer text-xs font-semibold text-net-700 underline underline-offset-2">Cambiar nombre o contraseña</summary>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <FormEstado action={cambiarNombreDeCuenta} className="space-y-2 rounded-xl bg-soft p-4">
+                      <input type="hidden" name="id" value={p.id} />
+                      <label className="text-sm font-bold" htmlFor={`nombre-${p.id}`}>Cambiar nombre <span className="font-normal text-muted">· el que se muestra y con el que se le paga</span></label>
+                      <div className="flex gap-2">
+                        <input id={`nombre-${p.id}`} name="nombre" required maxLength={120} defaultValue={p.nombre ?? ""} className="input !bg-panel !py-1.5" />
+                        <Submit className="btn-primary shrink-0 !px-4 !py-1.5" pendiente="Guardando…">Guardar</Submit>
+                      </div>
+                    </FormEstado>
+                    <FormEstado action={restablecerContrasena} className="space-y-2 rounded-xl bg-soft p-4">
+                      <input type="hidden" name="colaborador_id" value={p.id} />
+                      <p className="text-sm font-bold">Cambiar contraseña <span className="font-normal text-muted">· cópiala antes de guardar: no se vuelve a mostrar</span></p>
+                      <div className="flex gap-2">
+                        <div className="min-w-0 flex-1"><CampoContrasena id={`pw-${p.id}`} compacto /></div>
+                        <Submit className="btn-primary shrink-0 !px-4 !py-1.5" pendiente="Guardando…">Guardar</Submit>
+                      </div>
+                    </FormEstado>
+                  </div>
                 </details>
               </li>
             ))}

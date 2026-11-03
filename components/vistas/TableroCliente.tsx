@@ -1,16 +1,15 @@
 import Link from "next/link";
-import { cambiarNombreDeCuenta, crearCliente, guardarMwh, guardarPct, marcarPagado, moverFase, restablecerContrasena, sacarDelArchivo } from "@/app/actions";
-import { CampoContrasena } from "@/components/CampoContrasena";
+import { crearCliente, guardarMwh, guardarPct, marcarPagado, moverFase, sacarDelArchivo } from "@/app/actions";
 import { Avatar } from "@/components/Avatar";
 import { Kpi } from "@/components/Fase";
 import { Barras } from "@/components/Graficos";
 import { FormAviso } from "@/components/FormAviso";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
-import { FASES, FASE_COLOR, VALOR_MWH, claveMes, cx, eur, eur0, fecha, num, ultimosMeses } from "@/lib/utils";
+import { FASES, FASE_COLOR, VALOR_MWH, claveMes, eur, eur0, fecha, num, ultimosMeses } from "@/lib/utils";
 import type { ClienteStaff, Profile } from "@/lib/types";
 
-export function TableroCliente({ col, clientes, verArchivados, esAdmin = false }: { col: Profile; clientes: ClienteStaff[]; verArchivados: boolean; esAdmin?: boolean }) {
+export function TableroCliente({ col, clientes, verArchivados }: { col: Profile; clientes: ClienteStaff[]; verArchivados: boolean }) {
   const lista = clientes.filter((c) => (verArchivados ? !!c.archivado_at : !c.archivado_at));
   const id = col.id;
   // Pagos: se calculan con todos los clientes del colaborador, también los archivados.
@@ -24,7 +23,7 @@ export function TableroCliente({ col, clientes, verArchivados, esAdmin = false }
   const meses = ultimosMeses(6);
   const porMes = meses.map((m) => suma(pagados.filter((c) => claveMes(c.pagado_at) === m.clave)));
   return (
-    // En escritorio todo cabe en una pantalla: cabecera, pagos y gestión arriba; el tablero ocupa el resto y cada columna se desplaza por dentro.
+    // En escritorio todo cabe en una pantalla: cabecera, pagos y alta de clientes arriba; el tablero ocupa el resto y cada columna se desplaza por dentro.
     <div className="space-y-4 lg:flex lg:h-[calc(100dvh-5.75rem)] lg:min-h-[34rem] lg:flex-col lg:gap-4 lg:space-y-0">
       <div className="tarjeta flex shrink-0 flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -92,39 +91,15 @@ export function TableroCliente({ col, clientes, verArchivados, esAdmin = false }
         </dl>
       </section>
 
-      {(esAdmin || !verArchivados) && (
-        <div className={cx("grid shrink-0 gap-4", esAdmin && "md:grid-cols-2 lg:grid-cols-[1fr_1fr_1.3fr]")}>
-          {!verArchivados && (
-            <FormEstado action={crearCliente} className="tarjeta px-4 py-3">
-              <input type="hidden" name="colaborador_id" value={id} />
-              <label className="mb-1.5 block text-sm font-bold" htmlFor="nombre">Nuevo cliente</label>
-              <div className="flex gap-2">
-                <input id="nombre" name="nombre" required maxLength={200} className="input !py-1.5" placeholder="Nombre o razón social" />
-                <Submit className="btn-primary shrink-0 !px-4 !py-1.5" pendiente="Añadiendo…">Añadir</Submit>
-              </div>
-            </FormEstado>
-          )}
-          {esAdmin && (
-            <FormEstado action={cambiarNombreDeCuenta} className="tarjeta px-4 py-3">
-              <input type="hidden" name="id" value={id} />
-              <label className="mb-1.5 block text-sm font-bold" htmlFor="nombre-cuenta">Cambiar nombre <span className="font-normal text-muted">· el que se muestra y con el que se le paga</span></label>
-              <div className="flex gap-2">
-                <input id="nombre-cuenta" name="nombre" required maxLength={120} defaultValue={col.nombre ?? ""} className="input !py-1.5" />
-                <Submit className="btn-primary shrink-0 !px-4 !py-1.5" pendiente="Guardando…">Guardar</Submit>
-              </div>
-            </FormEstado>
-          )}
-          {esAdmin && (
-            <FormEstado action={restablecerContrasena} className="tarjeta px-4 py-3">
-              <input type="hidden" name="colaborador_id" value={id} />
-              <p className="mb-1.5 text-sm font-bold">Cambiar contraseña <span className="font-normal text-muted">· cópiala antes de guardar: no se vuelve a mostrar</span></p>
-              <div className="flex gap-2">
-                <div className="min-w-0 flex-1"><CampoContrasena compacto /></div>
-                <Submit className="btn-primary shrink-0 !px-4 !py-1.5" pendiente="Guardando…">Guardar</Submit>
-              </div>
-            </FormEstado>
-          )}
-        </div>
+      {!verArchivados && (
+        <FormEstado action={crearCliente} className="tarjeta shrink-0 px-4 py-3">
+          <input type="hidden" name="colaborador_id" value={id} />
+          <label className="mb-1.5 block text-sm font-bold" htmlFor="nombre">Nuevo cliente</label>
+          <div className="flex gap-2">
+            <input id="nombre" name="nombre" required maxLength={200} className="input !py-1.5" placeholder="Nombre o razón social" />
+            <Submit className="btn-primary shrink-0 !px-4 !py-1.5" pendiente="Añadiendo…">Añadir cliente</Submit>
+          </div>
+        </FormEstado>
       )}
 
       {verArchivados ? (
