@@ -8,6 +8,8 @@ export const getSessionProfile = cache(async () => {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { supabase, user: null, profile: null as Profile | null };
+  // Cuenta desactivada por un administrador: una sesión que ya estaba abierta deja de valer al instante.
+  if (user.banned_until && new Date(user.banned_until).getTime() > Date.now()) return { supabase, user: null, profile: null as Profile | null };
   const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single();
   return { supabase, user, profile: (data as Profile | null) };
 });

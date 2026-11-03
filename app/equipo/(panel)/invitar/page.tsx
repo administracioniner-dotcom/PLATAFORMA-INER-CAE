@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
-import { cambiarNombreDeCuenta, crearCuenta, restablecerContrasena } from "@/app/actions";
+import { cambiarEstadoCuenta, cambiarNombreDeCuenta, crearCuenta, eliminarCuenta, restablecerContrasena } from "@/app/actions";
 import { CampoContrasena } from "@/components/CampoContrasena";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
 import { requireStaff } from "@/lib/auth";
+import { createServiceClient } from "@/lib/supabase/server";
 import { fecha } from "@/lib/utils";
 
 const ROLES: Record<string, string> = { colaborador: "Colaborador", delegado: "Delegado", admin: "Administrador" };
@@ -13,6 +14,15 @@ export default async function Invitar() {
   if (profile.rol !== "admin") redirect("/equipo");
   const { data: personas } = await supabase.from("profiles").select("id,nombre,email,rol,estado,created_at").order("created_at");
   const { data: inv } = await supabase.from("invitaciones").select("email,rol,nombre,created_at");
+  const { data: cl } = await supabase.from("clientes").select("colaborador_id,pago");
+  const total = new Map<string, number>(), pagados = new Map<string, number>();
+  for (const c of cl ?? []) {
+    total.set(c.colaborador_id, (total.get(c.colaborador_id) ?? 0) + 1);
+    if (c.pago === "paid") pagados.set(c.colaborador_id, (pagados.get(c.colaborador_id) ?? 0) + 1);
+  }
+  // Solo el servidor sabe qué cuentas están desactivadas (campo de Supabase Auth).
+  const { data: usuarios } = await createServiceClient().auth.admin.listUsers({ perPage: 200 });
+  const desactivadas = new Set((usuarios?.users ?? []).filter((u) => u.banned_until && new Date(u.banned_until).getTime() > Date.now()).map((u) => u.id));
   const registrados = new Set((personas ?? []).map((p) => p.email));
   const pendientes = (inv ?? []).filter((i) => !registrados.has(i.email));
   return (
@@ -38,10 +48,10 @@ export default async function Invitar() {
               <li key={p.id} className="px-4 py-3 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span><span className="font-semibold">{p.nombre ?? p.email}</span> <span className="text-muted">{p.email}</span></span>
-                  <span className="text-muted">{ROLES[p.rol]} · {p.estado === "activo" ? "Activo" : "Aún no ha entrado"}</span>
+                  <span className="text-muted">{ROLES[p.rol]} · {desactivadas.has(p.id) ? <span className="font-semibold text-red-700">Desactivado</span> : p.estado === "activo" ? "Activo" : "Aún no ha entrado"}</span>
                 </div>
                 <details className="mt-2">
-                  <summary className="w-fit cursor-pointer text-xs font-semibold text-net-700 underline underline-offset-2">Cambiar nombre o contraseña</summary>
+                  <summary className="w-fit cursor-pointer text-xs font-semibold text-net-700 underline underline-offset-2">Gestionar cuenta</summary>
                   <div className="mt-3 grid gap-3 md:grid-cols-2">
                     <FormEstado action={cambiarNombreDeCuenta} className="space-y-2 rounded-xl bg-soft p-4">
                       <input type="hidden" name="id" value={p.id} />
@@ -60,6 +70,26 @@ export default async function Invitar() {
                       </div>
                     </FormEstado>
                   </div>
+                  {p.id !== profile.id && (
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <FormEstado action={cambiarEstadoCuenta} className="space-y-2 rounded-xl bg-soft p-4">
+                        <input type="hidden" name="id" value={p.id} />
+                        <input type="hidden" name="accion" value={desactivadas.has(p.id) ? "reactivar" : "desactivar"} />
+                        <p className="text-sm font-bold">{desactivadas.has(p.id) ? "Reactivar cuenta" : "Desactivar cuenta"} <span className="font-normal text-muted">· {desactivadas.has(p.id) ? "vuelve a poder entrar" : "no podrá entrar; se conservan sus clientes, pagos y mensajes"}</span></p>
+                        <Submit className="btn-primary !px-4 !py-1.5" pendiente="Guardando…">{desactivadas.has(p.id) ? "Reactivar" : "Desactivar"}</Submit>
+                      </FormEstado>
+                      <FormEstado action={eliminarCuenta} className="space-y-2 rounded-xl border border-red-200 bg-red-50 p-4">
+                        <input type="hidden" name="id" value={p.id} />
+                        <p className="text-sm font-bold text-red-800">Eliminar para siempre</p>
+                        <p className="text-xs text-red-800">Se borran la cuenta, sus {total.get(p.id) ?? 0} clientes{(pagados.get(p.id) ?? 0) > 0 ? ` (${pagados.get(p.id)} ya pagados: se pierde ese historial)` : ""} y todos sus mensajes. No se puede deshacer. Si dudas, desactívala.</p>
+                        <label className="text-xs font-semibold text-red-800" htmlFor={`conf-${p.id}`}>Escribe <span className="select-all">{p.email}</span> para confirmar</label>
+                        <div className="flex gap-2">
+                          <input id={`conf-${p.id}`} name="confirmar" required autoComplete="off" className="input !bg-panel !py-1.5" />
+                          <Submit className="shrink-0 rounded-full bg-red-700 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-800" pendiente="Eliminando…">Eliminar</Submit>
+                        </div>
+                      </FormEstado>
+                    </div>
+                  )}
                 </details>
               </li>
             ))}
