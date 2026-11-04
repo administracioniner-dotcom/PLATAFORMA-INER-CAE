@@ -46,9 +46,17 @@ export async function enviarCorreo(cfg: ConfigCorreo, destinatarios: string[], c
     });
     const r = await transporte.sendMail({ from: cfg.from, to: destinatarios, subject: correo.asunto, text: correo.texto, html: correo.html });
     return r.accepted.length > 0;
-  } catch {
+  } catch (e) {
+    console.warn("[aviso] el servidor de correo no aceptó el envío:", resumenError(e));
     return false;
   }
+}
+
+/** Resumen de un error de envío para los registros: código y primera línea de la respuesta del servidor. Nunca incluye credenciales. */
+export function resumenError(e: unknown): string {
+  const x = e as { code?: string; responseCode?: number; response?: string; message?: string };
+  const partes = [x?.code, x?.responseCode, (x?.response ?? x?.message ?? "").toString().split("\n")[0].slice(0, 160)].filter(Boolean);
+  return partes.join(" · ") || "error desconocido";
 }
 
 /** A quién se escribe: los administradores con correo válido, sin repetir y sin quien ya está atendiendo a ese colaborador en el portal. */
