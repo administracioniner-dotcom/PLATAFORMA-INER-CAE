@@ -217,7 +217,7 @@ export async function restablecerContrasena(_: Estado, fd: FormData): Promise<Es
 
 /** Crea la cuenta directamente con correo y contraseña (sin correo de invitación). */
 export async function crearCuenta(_: Estado, fd: FormData): Promise<Estado> {
-  const { supabase, user, profile } = await getSessionProfile();
+  const { user, profile } = await getSessionProfile();
   if (!user || profile?.rol !== "admin") return { error: "Solo un administrador puede crear cuentas." };
   const email = texto(fd, "email").toLowerCase();
   const nombre = texto(fd, "nombre") || null;
@@ -228,20 +228,21 @@ export async function crearCuenta(_: Estado, fd: FormData): Promise<Estado> {
   if (!ROLES.includes(rol)) return { error: "Rol no válido." };
   const problema = errorContrasena(password);
   if (problema) return { error: problema };
-  // El disparador handle_new_user necesita esta invitación para asignar el rol.
-  const { error: e1 } = await supabase.from("invitaciones").upsert({ email, rol, nombre, invitado_por: user.id });
+  // El disparador handle_new_user necesita esta invitación para asignar el rol, y una clave de un solo uso
+  // que solo conoce este servidor: quien se registre por su cuenta no puede completar el alta.
+  const clave = crypto.randomUUID();
+  const servicio = createServiceClient();
+  const { error: e1 } = await servicio.from("invitaciones").upsert({ email, rol, nombre, invitado_por: user.id, clave });
   if (e1) return { error: "No se pudo registrar la cuenta." };
-  // `app_metadata` solo puede escribirse con la clave de servidor: el registro público no puede falsificar esta marca,
-  // y el disparador rechaza cualquier alta que no la lleve.
-  const { data: creada, error: e2 } = await createServiceClient().auth.admin.createUser({
+  const { data: creada, error: e2 } = await servicio.auth.admin.createUser({
     email, password, email_confirm: true,
-    app_metadata: { creada_por_admin: true },
-    user_metadata: nombre ? { nombre } : undefined,
+    user_metadata: { clave_alta: clave, ...(nombre ? { nombre } : {}) },
   });
   if (e2 || !creada.user) {
     const yaExiste = !!e2 && /already|registered|exists/i.test(e2.message);
     // Si la cuenta no llegó a crearse, no dejamos la invitación colgada.
-    if (!yaExiste) await createServiceClient().from("invitaciones").delete().eq("email", email);
+    if (yaExiste) await servicio.from("invitaciones").update({ clave: null }).eq("email", email);
+    else await servicio.from("invitaciones").delete().eq("email", email);
     return { error: yaExiste ? "Ya existe una cuenta con ese correo." : "No se pudo crear la cuenta. Inténtalo de nuevo." };
   }
   await auditar(user.id, "CUENTA_CREADA", creada.user.id, { email, rol });
