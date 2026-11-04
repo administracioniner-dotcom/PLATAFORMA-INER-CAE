@@ -30,7 +30,7 @@ function errorContrasena(p: string): string | null {
 }
 
 /** Deja constancia de operaciones sensibles. Nunca guarda contraseñas. Un fallo aquí no interrumpe la operación. */
-async function auditar(autor: string, accion: string, registroId: string, despues?: Record<string, unknown>) {
+async function auditar(autor: string, accion: string, registroId: string | null, despues?: Record<string, unknown>) {
   try {
     await createServiceClient().from("audit_log").insert({ tabla: "auth.users", registro_id: registroId, accion, despues: despues ?? null, autor });
   } catch { /* la auditoría es complementaria */ }
@@ -239,12 +239,31 @@ export async function crearCuenta(_: Estado, fd: FormData): Promise<Estado> {
     user_metadata: nombre ? { nombre } : undefined,
   });
   if (e2 || !creada.user) {
-    return { error: e2 && /already|registered|exists/i.test(e2.message) ? "Ya existe una cuenta con ese correo." : "No se pudo crear la cuenta. Inténtalo de nuevo." };
+    const yaExiste = !!e2 && /already|registered|exists/i.test(e2.message);
+    // Si la cuenta no llegó a crearse, no dejamos la invitación colgada.
+    if (!yaExiste) await createServiceClient().from("invitaciones").delete().eq("email", email);
+    return { error: yaExiste ? "Ya existe una cuenta con ese correo." : "No se pudo crear la cuenta. Inténtalo de nuevo." };
   }
   await auditar(user.id, "CUENTA_CREADA", creada.user.id, { email, rol });
   revalidatePath("/equipo/invitar");
   revalidatePath("/equipo");
   return { ok: `Cuenta creada para ${email}. Ya puede entrar con esa contraseña.` };
+}
+
+/** Borra una invitación que nadie usó. Si ya hay una cuenta con ese correo, no toca nada: para eso está "Eliminar para siempre". */
+export async function borrarInvitacion(_: Estado, fd: FormData): Promise<Estado> {
+  const { user, profile } = await getSessionProfile();
+  if (!user || profile?.rol !== "admin") return { error: "Solo un administrador puede hacerlo." };
+  const email = texto(fd, "email").toLowerCase();
+  if (!EMAIL.test(email)) return { error: "Falta el correo de la invitación." };
+  const admin = createServiceClient();
+  const { data: cuenta } = await admin.from("profiles").select("id").eq("email", email).maybeSingle();
+  if (cuenta) return { error: "Ese correo ya tiene una cuenta. Gestiónala en la lista de cuentas." };
+  const { error } = await admin.from("invitaciones").delete().eq("email", email);
+  if (error) return { error: "No se pudo borrar la invitación." };
+  await auditar(user.id, "INVITACION_BORRADA", null, { email });
+  revalidatePath("/equipo/invitar");
+  return { ok: "Invitación borrada." };
 }
 
 /** Desactiva o reactiva una cuenta: no puede entrar, pero se conservan sus clientes, pagos y mensajes. */

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { cambiarEstadoCuenta, cambiarNombreDeCuenta, crearCuenta, eliminarCuenta, restablecerContrasena } from "@/app/actions";
+import { borrarInvitacion, cambiarEstadoCuenta, cambiarNombreDeCuenta, crearCuenta, eliminarCuenta, restablecerContrasena } from "@/app/actions";
 import { CampoContrasena } from "@/components/CampoContrasena";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
@@ -99,7 +99,18 @@ export default async function Invitar() {
           <section>
             <h2 className="mb-3 text-lg font-bold">Invitaciones sin usar</h2>
             <ul className="divide-y divide-line tarjeta">
-              {pendientes.map((i) => <li key={i.email} className="flex justify-between gap-2 px-4 py-3 text-sm"><span>{i.nombre ?? i.email} <span className="text-muted">{i.email}</span></span><span className="text-muted">{ROLES[i.rol]} · {fecha(i.created_at)}</span></li>)}
+              {pendientes.map((i) => (
+                <li key={i.email} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
+                  <span>{i.nombre ?? i.email} <span className="text-muted">{i.email}</span></span>
+                  <span className="flex items-center gap-3 text-muted">
+                    {ROLES[i.rol]} · {fecha(i.created_at)}
+                    <FormEstado action={borrarInvitacion}>
+                      <input type="hidden" name="email" value={i.email} />
+                      <Submit className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50" pendiente="Borrando…">Borrar</Submit>
+                    </FormEstado>
+                  </span>
+                </li>
+              ))}
             </ul>
           </section>
         )}
