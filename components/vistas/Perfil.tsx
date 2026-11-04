@@ -2,6 +2,7 @@ import { cambiarMiContrasena, guardarNombre } from "@/app/actions";
 import { Avatar } from "@/components/Avatar";
 import { FormEstado } from "@/components/FormEstado";
 import { Kpi } from "@/components/Fase";
+import { InputContrasena } from "@/components/InputContrasena";
 import { Submit } from "@/components/Submit";
 import { fecha } from "@/lib/utils";
 
@@ -50,9 +51,9 @@ export function Perfil({ nombre, email, rol, desde, datos, puedeEditarNombre }: 
         <h2 className="text-xl font-bold">Cambiar contraseña</h2>
         <p className="text-sm text-muted">Escribe la actual y elige una nueva de al menos 10 caracteres.</p>
         <div className="max-w-md space-y-4">
-          <div><label className="label" htmlFor="actual">Contraseña actual</label><input id="actual" name="actual" type="password" autoComplete="current-password" required className="input" /></div>
-          <div><label className="label" htmlFor="password">Contraseña nueva</label><input id="password" name="password" type="password" autoComplete="new-password" minLength={10} required className="input" /></div>
-          <div><label className="label" htmlFor="password2">Repite la nueva</label><input id="password2" name="password2" type="password" autoComplete="new-password" minLength={10} required className="input" /></div>
+          <div><label className="label" htmlFor="actual">Contraseña actual</label><InputContrasena id="actual" name="actual" autoComplete="current-password" required /></div>
+          <div><label className="label" htmlFor="password">Contraseña nueva</label><InputContrasena id="password" name="password" autoComplete="new-password" minLength={10} required /></div>
+          <div><label className="label" htmlFor="password2">Repite la nueva</label><InputContrasena id="password2" name="password2" autoComplete="new-password" minLength={10} required /></div>
         </div>
         <Submit className="btn-primary" pendiente="Cambiando…">Cambiar contraseña</Submit>
         <p className="text-xs text-muted">Si no recuerdas la actual, pide a INER que te asigne una nueva.</p>
