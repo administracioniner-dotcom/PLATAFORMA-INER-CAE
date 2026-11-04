@@ -14,7 +14,7 @@ const SEGUNDOS_PRESENCIA = 60;
  */
 export async function avisarMensajeNuevo(colaboradorId: string, nombre: string): Promise<void> {
   const config = leerConfig();
-  if (!config) return;
+  if (!config) { console.warn("[aviso] sin configuración de correo (faltan variables SMTP_*): no se envía"); return; }
   try {
     const db = createServiceClient();
     const { data: admins } = await db.from("profiles").select("id,email").eq("rol", "admin");
@@ -24,13 +24,14 @@ export async function avisarMensajeNuevo(colaboradorId: string, nombre: string):
       .gte("visto_at", new Date(Date.now() - SEGUNDOS_PRESENCIA * 1000).toISOString());
     const destinatarios = elegirDestinatarios(admins ?? [], new Set((latidos ?? []).map((l) => l.staff_id)));
     // Si nadie queda por avisar, no se gasta la reserva de los 10 minutos: el siguiente mensaje sí podrá avisar.
-    if (destinatarios.length === 0) return;
+    if (destinatarios.length === 0) { console.info(`[aviso] sin destinatarios: ${(admins ?? []).length} administradores, ${(latidos ?? []).length} con la conversación abierta`); return; }
     const { data: toca, error } = await db.rpc("reclamar_aviso_mensaje", { p_colaborador: colaboradorId, p_minutos: MINUTOS_ENTRE_AVISOS });
-    if (error || toca !== true) return;
+    if (error || toca !== true) { console.info(error ? `[aviso] no se pudo reservar el aviso: ${error.message}` : "[aviso] ya se avisó hace menos de 10 minutos de este colaborador"); return; }
     const enviado = await enviarCorreo(config, destinatarios, construirCorreo(nombre, `${SITIO}/equipo/mensajes?c=${colaboradorId}`));
     // Si el servidor de correo no lo aceptó, se libera la reserva para que el siguiente mensaje lo vuelva a intentar.
-    if (!enviado) await db.from("avisos_mensajes").delete().eq("colaborador_id", colaboradorId);
-  } catch {
-    /* el aviso es complementario */
+    if (enviado) console.info(`[aviso] correo enviado a ${destinatarios.length} destinatario(s)`);
+    else await db.from("avisos_mensajes").delete().eq("colaborador_id", colaboradorId);
+  } catch (e) {
+    console.warn("[aviso] error inesperado:", e instanceof Error ? e.message : "desconocido"); // el aviso es complementario
   }
 }
