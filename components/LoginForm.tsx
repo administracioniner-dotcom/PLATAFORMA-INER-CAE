@@ -1,6 +1,7 @@
 import { iniciarSesion } from "@/app/actions";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
+import { InputContrasena } from "@/components/InputContrasena";
 import { Marca } from "@/components/Marca";
 
 export function LoginForm({ equipo = false }: { equipo?: boolean }) {
@@ -33,7 +34,7 @@ export function LoginForm({ equipo = false }: { equipo?: boolean }) {
           </div>
           <div>
             <label className="label" htmlFor="password">Contraseña</label>
-            <input id="password" name="password" type="password" autoComplete="current-password" required className="input" />
+            <InputContrasena id="password" name="password" autoComplete="current-password" required />
           </div>
           <Submit className="btn-primary flecha w-full !py-3" pendiente="Entrando…">Entrar</Submit>
           <p className="text-sm text-muted">¿No recuerdas tu contraseña? Pídesela a tu contacto en INER.</p>
