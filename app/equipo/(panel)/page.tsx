@@ -1,7 +1,7 @@
 import { ListaColaboradores, type FilaColab } from "@/components/vistas/ListaColaboradores";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { requireStaff } from "@/lib/auth";
-import { VALOR_MWH, claveMes, ultimosMeses } from "@/lib/utils";
+import { claveMes, comisionDe, ultimosMeses } from "@/lib/utils";
 import type { ClienteStaff, Profile } from "@/lib/types";
 
 export default async function Colaboradores({ searchParams }: { searchParams: Promise<{ q?: string; f?: string }> }) {
@@ -16,14 +16,14 @@ export default async function Colaboradores({ searchParams }: { searchParams: Pr
   ]);
   const avances = [0, 1, 2, 3, 4].map((f) => meses.map((m) => (log ?? []).filter((l) => l.fase_nueva === f && claveMes(l.fecha) === m.clave).length));
   const clientes = (cs ?? []) as ClienteStaff[];
-  const comision = (c: ClienteStaff) => (c.mwh ?? 0) * VALOR_MWH * (c.pct / 100);
+  const comision = comisionDe;
   const filas: FilaColab[] = ((ps ?? []) as Profile[]).map((p) => {
     const mios = clientes.filter((c) => c.colaborador_id === p.id);
     return {
       p, n: mios.length,
       pendientes: mios.filter((c) => c.pago === "requested").length,
       porCobrar: mios.filter((c) => c.fase === 4 && c.pago !== "paid").reduce((a, c) => a + comision(c), 0),
-      valor: mios.reduce((a, c) => a + (c.mwh ?? 0) * VALOR_MWH, 0),
+      valor: mios.reduce((a, c) => a + (c.mwh ?? 0) * c.precio_mwh, 0),
       porFase: [0, 1, 2, 3, 4].map((fase) => mios.filter((c) => c.fase === fase).length),
     };
   }).filter((r) => {

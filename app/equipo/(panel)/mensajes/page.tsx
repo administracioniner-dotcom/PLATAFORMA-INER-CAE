@@ -5,7 +5,7 @@ import { ListaConversaciones, type ItemLista } from "@/components/mensajes/Lista
 import type { Sugerencia } from "@/components/mensajes/Compositor";
 import { colorDe, conversaciones } from "@/lib/mensajes";
 import { requireStaff } from "@/lib/auth";
-import { FASES, VALOR_MWH, cx, eur0, fecha, fechaLista, iniciales } from "@/lib/utils";
+import { FASES, comisionDe, cx, eur0, fecha, fechaLista, iniciales } from "@/lib/utils";
 import type { Mensaje, Profile } from "@/lib/types";
 
 // Respuestas que se repiten. Rellenan la caja y se pueden editar antes de enviar.
@@ -15,7 +15,7 @@ const RESPUESTAS_RAPIDAS: Sugerencia[] = [
   { etiqueta: "Lo revisamos", relleno: "Lo revisamos y te decimos algo." },
 ];
 
-type Cliente = { id: string; nombre: string; fase: number; pago: "none" | "requested" | "paid"; mwh: number | null; pct: number; archivado_at: string | null };
+type Cliente = { id: string; nombre: string; fase: number; pago: "none" | "requested" | "paid"; mwh: number | null; pct: number; precio_mwh: number; archivado_at: string | null };
 
 export default async function MensajesEquipo({ searchParams }: { searchParams: Promise<{ c?: string; hilo?: string }> }) {
   const { c, hilo } = await searchParams;
@@ -64,7 +64,7 @@ export default async function MensajesEquipo({ searchParams }: { searchParams: P
   if (actual) {
     const [{ data: mm }, { data: cs }] = await Promise.all([
       supabase.from("mensajes").select("*").eq("colaborador_id", actual.id).order("fecha", { ascending: false }).limit(500),
-      supabase.from("clientes").select("id,nombre,fase,pago,mwh,pct,archivado_at").eq("colaborador_id", actual.id).order("created_at", { ascending: false }),
+      supabase.from("clientes").select("id,nombre,fase,pago,mwh,pct,precio_mwh,archivado_at").eq("colaborador_id", actual.id).order("created_at", { ascending: false }),
     ]);
     const mensajes = (mm ?? []) as Mensaje[];
     const clientes = (cs ?? []) as Cliente[];
@@ -98,7 +98,7 @@ export default async function MensajesEquipo({ searchParams }: { searchParams: P
     );
 
     const solicitados = clientes.filter((x) => x.pago === "requested");
-    const importe = solicitados.reduce((a, x) => a + (x.mwh ?? 0) * VALOR_MWH * x.pct / 100, 0);
+    const importe = solicitados.reduce((a, x) => a + comisionDe(x), 0);
     const sinLeer = resumen.get(actual.id)?.sinLeer ?? 0;
     const vivos = clientes.filter((x) => !x.archivado_at);
     ficha = (

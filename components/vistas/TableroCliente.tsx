@@ -8,14 +8,14 @@ import { TarjetaCliente } from "@/components/TarjetaCliente";
 import { FormAviso } from "@/components/FormAviso";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
-import { FASES, FASE_COLOR, VALOR_MWH, claveMes, eur, eur0, fecha, num, ultimosMeses } from "@/lib/utils";
+import { FASES, FASE_COLOR, claveMes, comisionDe, eur, eur0, fecha, num, ultimosMeses } from "@/lib/utils";
 import type { ClienteStaff, Profile } from "@/lib/types";
 
-export function TableroCliente({ col, clientes, verArchivados }: { col: Profile; clientes: ClienteStaff[]; verArchivados: boolean }) {
+export function TableroCliente({ col, clientes, verArchivados, esAdmin }: { col: Profile; clientes: ClienteStaff[]; verArchivados: boolean; esAdmin: boolean }) {
   const lista = clientes.filter((c) => (verArchivados ? !!c.archivado_at : !c.archivado_at));
   const id = col.id;
   // Pagos: se calculan con todos los clientes del colaborador, también los archivados.
-  const comision = (c: ClienteStaff) => ((c.mwh ?? 0) * VALOR_MWH * c.pct) / 100;
+  const comision = comisionDe;
   const pagados = clientes.filter((c) => c.pago === "paid").sort((a, b) => (b.pagado_at ?? "").localeCompare(a.pagado_at ?? ""));
   const totalPagado = pagados.reduce((a, c) => a + comision(c), 0);
   const porPagar = clientes.filter((c) => c.fase === 4 && c.pago !== "paid");
@@ -140,7 +140,7 @@ export function TableroCliente({ col, clientes, verArchivados }: { col: Profile;
                 </h2>
                 <ul className="grid content-start gap-2.5 [grid-template-columns:repeat(auto-fill,minmax(16rem,1fr))] lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
                   {enFase.map((c) => (
-                    <TarjetaCliente key={c.id} c={{ id: c.id, nombre: c.nombre, fase: c.fase, mwh: c.mwh, pct: c.pct, pago: c.pago, solicitado_at: c.solicitado_at, pagado_at: c.pagado_at, comision: comision(c) }} />
+                    <TarjetaCliente key={c.id} puedeEliminar={esAdmin} c={{ id: c.id, nombre: c.nombre, fase: c.fase, mwh: c.mwh, pct: c.pct, precio_mwh: c.precio_mwh, pago: c.pago, solicitado_at: c.solicitado_at, pagado_at: c.pagado_at, comision: comision(c) }} />
                   ))}
                 </ul>
               </section>

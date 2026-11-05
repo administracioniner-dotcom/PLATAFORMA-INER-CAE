@@ -163,20 +163,44 @@ export async function moverFase(fd: FormData): Promise<Estado> {
   return { ok: "Fase actualizada" };
 }
 
-/** Guarda MWh y porcentaje del colaborador en una sola operación. */
+/** Guarda nombre, MWh, porcentaje del colaborador y precio por MWh del cliente en una sola operación. */
 export async function guardarDatosCliente(fd: FormData): Promise<Estado> {
   const { supabase } = await soloStaff();
   const id = texto(fd, "id");
+  const nombre = texto(fd, "nombre");
   const v = texto(fd, "mwh").replace(",", ".");
   const mwh = v === "" ? null : Number(v);
   const pct = Number(texto(fd, "pct").replace(",", "."));
+  const precio = Number(texto(fd, "precio_mwh").replace(",", "."));
   if (!esUuid(id)) return { error: "Petición no válida." };
+  if (!nombre) return { error: "El cliente necesita un nombre." };
+  if (nombre.length > MAX_NOMBRE_CLIENTE) return { error: `El nombre no puede superar ${MAX_NOMBRE_CLIENTE} caracteres.` };
   if (mwh !== null && (!Number.isFinite(mwh) || mwh < 0 || mwh > MAX_MWH)) return { error: "Los MWh deben ser un número entre 0 y 1.000.000." };
   if (!Number.isFinite(pct) || pct < 0 || pct > 100) return { error: "El porcentaje debe estar entre 0 y 100." };
-  const { data, error } = await supabase.from("clientes").update({ mwh, pct }).eq("id", id).select("colaborador_id").single();
+  if (!Number.isFinite(precio) || precio < 0 || precio > 100_000) return { error: "El precio por MWh debe estar entre 0 y 100.000 €." };
+  const { data, error } = await supabase.from("clientes").update({ nombre, mwh, pct, precio_mwh: precio }).eq("id", id).select("colaborador_id").single();
   if (error || !data) return { error: "No se pudieron guardar los datos." };
   revalidatePath(`/equipo/colaboradores/${data.colaborador_id}`);
+  revalidatePath("/equipo");
   return { ok: "Datos guardados" };
+}
+
+/** Elimina un cliente con su historial y mensajes. Solo administradores (lo exige también la base de datos). */
+export async function eliminarCliente(fd: FormData): Promise<Estado> {
+  const { user, profile, supabase } = await getSessionProfile();
+  if (!user || profile?.rol !== "admin") return { error: "Solo un administrador puede eliminar clientes." };
+  const id = texto(fd, "id");
+  if (!esUuid(id)) return { error: "Petición no válida." };
+  const { data: cliente } = await supabase.from("clientes").select("id,nombre,colaborador_id,pago,mwh").eq("id", id).maybeSingle();
+  if (!cliente) return { error: "El cliente ya no existe." };
+  const { data: borrado, error } = await supabase.from("clientes").delete().eq("id", id).select("id");
+  if (error || !borrado?.length) return { error: "No se pudo eliminar el cliente." };
+  await auditar(user.id, "CLIENTE_ELIMINADO", id, { nombre: cliente.nombre, colaborador_id: cliente.colaborador_id, pago: cliente.pago, mwh: cliente.mwh });
+  revalidatePath(`/equipo/colaboradores/${cliente.colaborador_id}`);
+  revalidatePath("/equipo");
+  revalidatePath("/mensajes");
+  revalidatePath("/");
+  return { ok: "Cliente eliminado." };
 }
 
 export async function marcarPagado(fd: FormData): Promise<Estado> {
