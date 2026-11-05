@@ -12,3 +12,9 @@ export type Mensaje = {
   texto: string; leido: boolean; es_sistema: boolean; fecha: string;
 };
 export type Cambio = { cliente_id: string; fase_anterior: number | null; fase_nueva: number; fecha: string };
+
+/* Mis clientes: clientes que INER lleva directamente, con la ficha y los documentos que se piden. */
+export type FichaTipo = { id: string; codigo: string; nombre: string };
+export type FichaDoc = { id: string; ficha_id: string; grupo: string; nombre: string; ayuda: string | null; depende_de: string | null; aviso_anios: number | null; orden: number };
+export type ClienteDirecto = { id: string; nombre: string; ficha_id: string; mwh: number | null; precio_mwh: number; fase: number; cobrado_at: string | null; created_at: string };
+export type MarcaDoc = { cliente_id: string; documento_id: string; listo: boolean; fecha: string | null };

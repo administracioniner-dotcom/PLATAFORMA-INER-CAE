@@ -8,6 +8,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const enlaces = [
     { href: "/equipo", texto: "Colaboradores" },
     { href: "/equipo/mensajes", texto: "Mensajes", badge: count ?? 0 },
+    { href: "/equipo/mis-clientes", texto: "Mis clientes" },
     ...(profile.rol === "admin" ? [{ href: "/equipo/invitar", texto: "Crear colaborador" }] : []),
     { href: "/equipo/perfil", texto: "Mi perfil" },
   ];

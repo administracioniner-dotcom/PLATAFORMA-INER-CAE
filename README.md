@@ -46,6 +46,11 @@ Cuando un colaborador escribe en el portal, las cuentas de **administrador** rec
 
 ## Rutas
 - Colaborador: `/login`, `/` (panel), `/mensajes`, `/perfil`, `/soporte`
-- Equipo: `/equipo/login`, `/equipo`, `/equipo/colaboradores/[id]` (alta de clientes y pagos), `/equipo/mensajes`, `/equipo/perfil`, `/equipo/invitar` (solo admin), `/equipo/exportar` (CSV para Excel)
+- Equipo: `/equipo/login`, `/equipo`, `/equipo/colaboradores/[id]` (alta de clientes y pagos), `/equipo/mensajes`, `/equipo/perfil`, `/equipo/invitar` (solo admin), `/equipo/exportar` (CSV para Excel), `/equipo/mis-clientes` (clientes que lleva INER directamente), `/equipo/mis-clientes/fichas` (solo admin: fichas y sus documentos)
+
+## Mis clientes y fichas
+Los clientes que INER lleva directamente (sin colaborador ni cuenta) están en `clientes_directos`: nombre, ficha, MWh, precio por MWh (100 € por defecto), fase y cobro. Todo el equipo los ve y los edita; el cobro solo se marca con el CAE expedido.
+
+Cada **ficha** (`fichas_tipo`, por ejemplo RES060 o RES080) es una lista de documentos (`fichas_documento`) que escribe y ordena un administrador en `/equipo/mis-clientes/fichas`: grupo (carpeta), nombre, ayuda, «depende de» (no se marca si no está marcado el anterior) y «pide fecha y avisa a los N años» (para la fecha de la factura). Lo marcado como listo de cada cliente está en `clientes_directos_docs`. RLS: el equipo lee y marca; solo un administrador cambia fichas.
 
 El rol siempre lo decide el servidor según la cuenta (tabla `profiles`), no la URL.
