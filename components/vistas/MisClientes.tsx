@@ -239,10 +239,13 @@ export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { ficha
           <h1 className="text-3xl font-bold tracking-[-0.02em]">Mis clientes</h1>
           <p className="text-muted">Los clientes que llevas directamente, sin colaborador: ficha, documentos y cobro.</p>
         </div>
-        {esAdmin && <Link href="/equipo/mis-clientes/fichas" className="btn btn-ghost">Gestionar fichas</Link>}
+        <div className="flex flex-wrap gap-2">
+          {esAdmin && <Link href="/equipo/mis-clientes/fichas" className="btn btn-ghost">Gestionar fichas</Link>}
+          <button type="button" onClick={() => setNuevoAbierto(!nuevoAbierto)} aria-expanded={nuevoAbierto} aria-controls="nuevo-cliente" className="btn btn-primary">+ Nuevo cliente</button>
+        </div>
       </div>
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_auto]" aria-label="Resumen">
+      <section className="grid gap-3 sm:grid-cols-3" aria-label="Resumen">
         <div className="flex flex-col justify-center rounded-2xl bg-ink px-5 py-3 text-white">
           <p className="etiqueta !text-white/75">Cobrado hasta hoy</p>
           <p className="num text-3xl leading-tight">{eur(suma(cobrados))}</p>
@@ -258,7 +261,6 @@ export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { ficha
           <p className="num text-2xl leading-tight text-net-700">{eur(suma(enTramite))}</p>
           <p className="text-xs text-muted">{enTramite.length} sin CAE expedido</p>
         </div>
-        <button type="button" onClick={() => setNuevoAbierto(!nuevoAbierto)} aria-expanded={nuevoAbierto} aria-controls="nuevo-cliente" className="btn btn-primary rounded-2xl px-6 sm:col-span-2 lg:col-span-1">+ Nuevo cliente</button>
       </section>
 
       {nuevoAbierto && (
