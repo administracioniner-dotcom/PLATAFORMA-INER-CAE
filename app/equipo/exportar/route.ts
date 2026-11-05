@@ -1,5 +1,5 @@
 import { getSessionProfile } from "@/lib/auth";
-import { FASES, VALOR_MWH } from "@/lib/utils";
+import { FASES } from "@/lib/utils";
 import type { ClienteStaff, Profile } from "@/lib/types";
 
 const PAGO = { none: "Sin solicitar", requested: "Solicitado", paid: "Pagado" } as const;
@@ -18,11 +18,11 @@ export async function GET() {
     supabase.from("clientes").select("*").order("created_at"),
   ]);
   const colab = new Map(((ps ?? []) as Profile[]).map((p) => [p.id, p]));
-  const filas = [["Colaborador", "Correo", "Cliente", "Fase", "MWh", "% colaborador", "Comisión (€)", "Pago", "Alta", "Archivado"]];
+  const filas = [["Colaborador", "Correo", "Cliente", "Fase", "MWh", "Precio (€/MWh)", "% colaborador", "Comisión (€)", "Pago", "Alta", "Archivado"]];
   for (const c of (cs ?? []) as ClienteStaff[]) {
     const p = colab.get(c.colaborador_id);
-    const comision = c.mwh == null ? null : Math.round(c.mwh * VALOR_MWH * c.pct) / 100;
-    filas.push([p?.nombre ?? "", p?.email ?? "", c.nombre, FASES[c.fase], decimal(c.mwh), decimal(c.pct), decimal(comision), PAGO[c.pago], dia(c.created_at), dia(c.archivado_at)] as string[]);
+    const comision = c.mwh == null ? null : Math.round(c.mwh * c.precio_mwh * c.pct) / 100;
+    filas.push([p?.nombre ?? "", p?.email ?? "", c.nombre, FASES[c.fase], decimal(c.mwh), decimal(c.precio_mwh), decimal(c.pct), decimal(comision), PAGO[c.pago], dia(c.created_at), dia(c.archivado_at)] as string[]);
   }
   // BOM + punto y coma: Excel en español lo abre con tildes y columnas bien separadas.
   const csv = "﻿" + filas.map((f) => f.map(celda).join(";")).join("\r\n");

@@ -1,5 +1,8 @@
 export const FASES = ["Cálculo de CAEs", "Contrato aceptado", "Fase verificador", "Fase MITECO", "CAE expedido"] as const;
-export const VALOR_MWH = 100; // 1 CAE = 1 kWh -> 100 €/MWh. Solo se usa en vistas de equipo.
+export const VALOR_MWH = 100; // Precio habitual: 100 €/MWh. Cada cliente puede tener el suyo (clientes.precio_mwh).
+/** Comisión del colaborador por un cliente: MWh × precio del cliente × % del colaborador. Solo para vistas de equipo. */
+export const comisionDe = (c: { mwh: number | null; pct: number; precio_mwh?: number | null }) =>
+  ((c.mwh ?? 0) * (c.precio_mwh ?? VALOR_MWH) * c.pct) / 100;
 export const eur = (n: number | null | undefined) =>
   n == null ? "—" : new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", useGrouping: "always" }).format(n);
 /** Euros sin decimales, para cifras grandes de indicadores. */
