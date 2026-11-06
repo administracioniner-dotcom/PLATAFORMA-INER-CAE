@@ -13,10 +13,11 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     { href: "/equipo/perfil", texto: "Mi perfil" },
   ];
   return (
-    <>
+    // Columna que ocupa al menos toda la ventana: en páginas cortas el pie baja hasta el final en lugar de quedarse a media altura.
+    <div className="flex min-h-screen flex-col">
       <Cabecera nombre={profile.nombre ?? profile.email} rol={profile.rol === "admin" ? "Administrador" : "Delegado"} enlaces={enlaces} />
-      <main className="contenedor py-8">{children}</main>
+      <main className="contenedor w-full flex-1 py-8">{children}</main>
       <Pie />
-    </>
+    </div>
   );
 }
