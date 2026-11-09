@@ -7,10 +7,10 @@ import { requireStaff } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import { fecha } from "@/lib/utils";
 
-const ROLES: Record<string, string> = { colaborador: "Colaborador", delegado: "Delegado", admin: "Administrador" };
+const ROLES: Record<string, string> = { colaborador: "Colaborador", admin: "Administrador" };
 // Los clientes se crean desde «Mis clientes»; aquí solo aparecen en la lista de cuentas.
-const GRUPOS: [string, string][] = [["admin", "Administradores"], ["delegado", "Delegados"], ["colaborador", "Colaboradores"], ["cliente", "Clientes"]];
-const ETIQUETA_ROL: Record<string, string> = { ...ROLES, cliente: "Cliente" };
+const GRUPOS: [string, string][] = [["admin", "Administradores"], ["colaborador", "Colaboradores"], ["cliente", "Clientes"]];
+const ETIQUETA_ROL: Record<string, string> = { ...ROLES, delegado: "Administrador", cliente: "Cliente" };
 
 export default async function Invitar() {
   const { supabase, profile } = await requireStaff();
@@ -48,7 +48,7 @@ export default async function Invitar() {
           <h2 className="mb-3 text-lg font-bold">Cuentas</h2>
           <div className="space-y-3">
           {GRUPOS.map(([rol, titulo]) => {
-            const delGrupo = (personas ?? []).filter((x) => x.rol === rol);
+            const delGrupo = (personas ?? []).filter((x) => x.rol === rol || (rol === "admin" && x.rol === "delegado"));
             return (
           <details key={rol} open={rol !== "cliente"} className="tarjeta">
             <summary className="flex cursor-pointer items-center justify-between px-4 py-3 font-bold">

@@ -26,7 +26,7 @@ export function LoginForm({ equipo = false, cliente = false }: { equipo?: boolea
         <FormEstado action={iniciarSesion} className="w-full max-w-sm space-y-5">
           <div>
             <h2 className="text-3xl font-bold tracking-[-0.02em]">{equipo ? "Acceso del equipo" : cliente ? "Accede a tu proyecto" : "Entrar"}</h2>
-            <p className="mt-1 text-sm text-muted">{equipo ? "Delegados y administradores." : cliente ? "Con el correo y la contraseña que te dio INER." : "Con el correo y la contraseña que te dio INER."}</p>
+            <p className="mt-1 text-sm text-muted">{equipo ? "Solo administradores." : cliente ? "Con el correo y la contraseña que te dio INER." : "Con el correo y la contraseña que te dio INER."}</p>
           </div>
           <div>
             <label className="label" htmlFor="email">Correo</label>
