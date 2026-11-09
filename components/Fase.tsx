@@ -1,8 +1,8 @@
-import { FASES, FASE_COLOR, cx } from "@/lib/utils";
+import { FASES, FASE_COLOR, cx, FASE_FINAL } from "@/lib/utils";
 
 /** Etiqueta con el nombre de la fase. */
 export function Fase({ fase }: { fase: number }) {
-  const hecho = fase === 4;
+  const hecho = fase === FASE_FINAL;
   return (
     <span className={cx("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-bold", hecho ? "bg-batt-50 text-batt-700" : "bg-net-50 text-net-700")}>
       <span className="h-1.5 w-1.5 rounded-full" style={{ background: FASE_COLOR[fase] }} />{FASES[fase]}
@@ -10,14 +10,14 @@ export function Fase({ fase }: { fase: number }) {
   );
 }
 
-/** Cinco tramos: los alcanzados toman el color de su fase. */
+/** Un tramo por fase: los alcanzados toman el color de su fase. */
 export function Recorrido({ fase }: { fase: number }) {
   return (
-    <div className="min-w-[8.5rem]" role="img" aria-label={`Fase ${fase + 1} de 5: ${FASES[fase]}`}>
+    <div className="min-w-[8.5rem]" role="img" aria-label={`Fase ${fase + 1} de ${FASES.length}: ${FASES[fase]}`}>
       <div className="flex gap-1" aria-hidden>
         {FASES.map((_, i) => <span key={i} className="h-1.5 flex-1 rounded-full" style={{ background: i <= fase ? FASE_COLOR[i] : "#E5E7EB" }} />)}
       </div>
-      <p className={cx("mt-1.5 text-xs font-semibold", fase === 4 ? "text-batt-700" : "text-ink")}>{FASES[fase]}</p>
+      <p className={cx("mt-1.5 text-xs font-semibold", fase === FASE_FINAL ? "text-batt-700" : "text-ink")}>{FASES[fase]}</p>
     </div>
   );
 }
@@ -44,7 +44,7 @@ export function Embudo({ conteos, compacto = false, linea = false }: { conteos: 
         </ul>
       )}
       {!compacto && !linea && (
-        <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-5">
+        <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
           {FASES.map((f, i) => (
             <li key={f} className="flex items-start gap-2">
               <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: FASE_COLOR[i] }} />

@@ -4,7 +4,7 @@ import { ListaConversaciones, type ItemLista } from "@/components/mensajes/Lista
 import type { Sugerencia } from "@/components/mensajes/Compositor";
 import { conversaciones } from "@/lib/mensajes";
 import { requireColaborador } from "@/lib/auth";
-import { FASES, FASE_COLOR, cx, eur, fechaLista, iniciales } from "@/lib/utils";
+import { FASES, FASE_COLOR, cx, eur, fechaLista, iniciales, FASE_FINAL } from "@/lib/utils";
 import type { Mensaje } from "@/lib/types";
 
 // Lo que el colaborador no puede hacer solo y debe pedir a INER (coincide con la sección de Soporte).
@@ -57,7 +57,7 @@ export default async function Mensajes({ searchParams }: { searchParams: Promise
                 volverHref="/mensajes" iniciales={cliente ? iniciales(cliente.nombre) : "IN"} color={cliente ? FASE_COLOR[cliente.fase] : "#021037"}
                 titulo={actual.titulo} subtitulo={cliente ? "Cliente que nos has pasado" : "Habla con el equipo de INER"}
                 estado={cliente ? (cliente.pago === "paid" ? "Pagado" : cliente.pago === "requested" ? "Pago solicitado" : FASES[cliente.fase]) : undefined}
-                tono={cliente && (cliente.fase === 4 || cliente.pago === "paid") ? "batt" : "net"}
+                tono={cliente && (cliente.fase === FASE_FINAL || cliente.pago === "paid") ? "batt" : "net"}
                 dato={cliente && cliente.comision != null ? `Comisión ${eur(cliente.comision)}` : undefined}
                 verHref={cliente ? "/#clientes" : undefined}
               />

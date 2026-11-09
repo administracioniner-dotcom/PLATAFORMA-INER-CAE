@@ -5,6 +5,7 @@ const DETALLE = [
   "INER calcula cuántos CAE puede generar el cliente a partir de su actuación.",
   "El cliente acepta el contrato y arranca la tramitación.",
   "Un verificador revisa la documentación de la actuación.",
+  "El gestor autonómico revisa y valida el expediente en la comunidad autónoma.",
   "El expediente se tramita ante el MITECO.",
   "El CAE está expedido: ya puedes solicitar el pago de tu comisión.",
 ];
@@ -42,7 +43,7 @@ export function SoporteVista() {
       </section>
 
       <section className="tarjeta p-5 sm:p-6">
-        <h2 className="mb-4 text-xl font-bold">Las cinco fases de un cliente</h2>
+        <h2 className="mb-4 text-xl font-bold">Las fases de un cliente</h2>
         <ol className="space-y-3">
           {FASES.map((f, i) => (
             <li key={f} className="flex gap-3">

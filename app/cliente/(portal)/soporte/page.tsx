@@ -1,7 +1,7 @@
 import { requireCliente } from "@/lib/auth";
 
 const PREGUNTAS: [string, string][] = [
-  ["¿Qué significa cada fase?", "Cálculo de CAEs: calculamos cuántos CAE genera tu actuación. Contrato aceptado: arranca la tramitación. Fase verificador: un organismo revisa tu documentación. Fase MITECO: se tramita ante el Ministerio. CAE expedido: ya está listo y te pagamos."],
+  ["¿Qué significa cada fase?", "Cálculo de CAEs: calculamos cuántos CAE genera tu actuación. Contrato aceptado: arranca la tramitación. Fase verificador: un organismo revisa tu documentación. Gestor Autonómico: se valida el expediente en tu comunidad autónoma. Fase MITECO: se tramita ante el Ministerio. CAE expedido: ya está listo y te pagamos."],
   ["¿Cuándo se me paga?", "Cuando el CAE está expedido. En «Mi proyecto» ves el importe y si está pendiente o ya pagado."],
   ["¿Cómo entrego los documentos que faltan?", "Envíanoslos por correo a info@iner.es o dínoslo por teléfono. Cuando los recibamos los marcamos y dejan de aparecer como pendientes."],
   ["¿Por qué el importe aparece como «—»?", "Los MWh los introduce INER cuando termina el cálculo. Hasta entonces no se puede calcular el importe."],

@@ -1,4 +1,6 @@
-export const FASES = ["Cálculo de CAEs", "Contrato aceptado", "Fase verificador", "Fase MITECO", "CAE expedido"] as const;
+export const FASES = ["Cálculo de CAEs", "Contrato aceptado", "Fase verificador", "Gestor Autonómico", "Fase MITECO", "CAE expedido"] as const;
+/** Índice de la última fase (CAE expedido): solo con ella se solicita o marca el pago. */
+export const FASE_FINAL = FASES.length - 1;
 export const VALOR_MWH = 100; // Precio habitual: 100 €/MWh. Cada cliente puede tener el suyo (clientes.precio_mwh).
 /** Comisión del colaborador por un cliente: MWh × precio del cliente × % del colaborador. Solo para vistas de equipo. */
 export const comisionDe = (c: { mwh: number | null; pct: number; precio_mwh?: number | null }) =>
@@ -37,7 +39,7 @@ export function fechaLista(s: string, ahora = new Date()) {
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
 /** Color de cada fase: degradado de la marca mientras se tramita y verde-azulado cuando el CAE está expedido. */
-export const FASE_COLOR = ["#EA5409", "#EE6A0A", "#F2820A", "#F69A0A", "#0EA394"] as const;
+export const FASE_COLOR = ["#EA5409", "#EE6A0A", "#F2820A", "#F59A0A", "#F7B20C", "#0EA394"] as const;
 export const iniciales = (n: string) => n.split(/[\s@.·]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 export const primerNombre = (n: string) => n.split(/[\s@]/)[0];
 

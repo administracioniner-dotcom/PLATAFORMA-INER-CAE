@@ -52,3 +52,17 @@ body { @apply bg-bg text-ink antialiased; }
 .col-g:hover .tip, .col-g:focus-visible .tip { opacity: 1; }
 .col-g:hover .barra, .col-g:focus-visible .barra { opacity: 1; }
 .col-g:focus-visible .hit { stroke: #2F6FE0; stroke-width: 2; rx: 6; }
+
+/* Portal del cliente: animaciones de entrada (se desactivan con «reducir movimiento», regla de arriba). */
+@keyframes llenar-x { from { transform: scaleX(0); } }
+@keyframes llenar-y { from { transform: scaleY(0); } }
+.llena { transform-origin: top; animation: llenar-y .9s .25s cubic-bezier(.2,.8,.2,1) both; }
+@media (min-width: 640px) { .llena { transform-origin: left; animation-name: llenar-x; } }
+@keyframes anillo { from { stroke-dashoffset: var(--circ); } }
+.anillo-v { animation: anillo 1.4s .1s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes entra-nota { from { opacity: 0; transform: translateY(6px); } }
+.nota-obs { animation: entra-nota .6s .7s both; }
+@keyframes latido-paso { 50% { box-shadow: 0 0 0 8px rgba(234,84,9,.16); } }
+.paso-ahora { animation: latido-paso 2s infinite; }
+@keyframes pulso-punto { 70% { box-shadow: 0 0 0 10px rgba(234,84,9,0); } 100% { box-shadow: 0 0 0 0 rgba(234,84,9,0); } }
+.punto-vivo { box-shadow: 0 0 0 0 rgba(234,84,9,.7); animation: pulso-punto 1.8s infinite; }

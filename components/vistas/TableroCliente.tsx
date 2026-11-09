@@ -8,7 +8,7 @@ import { TarjetaCliente } from "@/components/TarjetaCliente";
 import { FormAviso } from "@/components/FormAviso";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
-import { FASES, FASE_COLOR, claveMes, comisionDe, eur, eur0, fecha, num, ultimosMeses } from "@/lib/utils";
+import { FASES, FASE_COLOR, claveMes, comisionDe, eur, eur0, fecha, num, ultimosMeses, FASE_FINAL } from "@/lib/utils";
 import type { ClienteStaff, Profile } from "@/lib/types";
 
 export function TableroCliente({ col, clientes, verArchivados, esAdmin }: { col: Profile; clientes: ClienteStaff[]; verArchivados: boolean; esAdmin: boolean }) {
@@ -18,9 +18,9 @@ export function TableroCliente({ col, clientes, verArchivados, esAdmin }: { col:
   const comision = comisionDe;
   const pagados = clientes.filter((c) => c.pago === "paid").sort((a, b) => (b.pagado_at ?? "").localeCompare(a.pagado_at ?? ""));
   const totalPagado = pagados.reduce((a, c) => a + comision(c), 0);
-  const porPagar = clientes.filter((c) => c.fase === 4 && c.pago !== "paid");
+  const porPagar = clientes.filter((c) => c.fase === FASE_FINAL && c.pago !== "paid");
   const solicitados = porPagar.filter((c) => c.pago === "requested");
-  const enTramitacion = clientes.filter((c) => c.fase < 4);
+  const enTramitacion = clientes.filter((c) => c.fase < FASE_FINAL);
   const suma = (cs: ClienteStaff[]) => cs.reduce((a, c) => a + comision(c), 0);
   const meses = ultimosMeses(6);
   const porMes = meses.map((m) => suma(pagados.filter((c) => claveMes(c.pagado_at) === m.clave)));
