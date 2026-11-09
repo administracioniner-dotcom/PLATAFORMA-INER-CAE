@@ -35,6 +35,8 @@ export function MisClientes({ fichas, docs, clientes, marcas, obs, esAdmin }: { 
   const [nuevoAbierto, setNuevoAbierto] = useState(false);
   const [claveNuevo, setClaveNuevo] = useState(0);
   const [fichaSel, setFichaSel] = useState<Record<string, string>>({});
+  /** Correo y contraseña recién creados: se enseñan una sola vez para poder pasárselos al cliente. */
+  const [recien, setRecien] = useState<Record<string, { email: string; password: string }>>({});
 
   // El filtro, el orden, la vista y el modo de documentos se recuerdan en este navegador.
   const cargado = useRef(false);
@@ -235,8 +237,20 @@ export function MisClientes({ fichas, docs, clientes, marcas, obs, esAdmin }: { 
               {c.usuario_id ? (
                 <div className="space-y-4">
                   <p className="rounded-xl bg-batt-50 px-3 py-2 text-sm text-batt-700">✓ Este cliente tiene acceso al portal con <b>{c.email}</b>.</p>
+                  {recien[c.id] && (
+                    <div className="rounded-xl border border-sun/40 bg-sun-50 p-3 text-sm">
+                      <p className="font-bold">Envíaselo al cliente ahora: la contraseña no se vuelve a mostrar</p>
+                      <p className="mt-1 select-all break-all"><span className="text-muted">Enlace:</span> https://plataforma-iner-cae.vercel.app/cliente/login</p>
+                      <p className="select-all break-all"><span className="text-muted">Correo:</span> {recien[c.id].email}</p>
+                      <p className="select-all break-all font-mono"><span className="font-sans text-muted">Contraseña:</span> {recien[c.id].password}</p>
+                    </div>
+                  )}
                   <p className="text-sm text-muted">Entra en la dirección del portal de clientes. Ve su proyecto, las fases con tus observaciones, lo que falta y lo que se le va a pagar.</p>
-                  <FormAviso action={contrasenaCliente} className="space-y-2">
+                  <FormAviso className="space-y-2" action={async (fd) => {
+                    const r = await contrasenaCliente(fd);
+                    if (!r?.error && c.email) setRecien((x) => ({ ...x, [c.id]: { email: c.email as string, password: String(fd.get("password") ?? "") } }));
+                    return r;
+                  }}>
                     <input type="hidden" name="id" value={c.id} />
                     <p className="text-sm font-bold">Restablecer su contraseña <span className="font-normal text-muted">· cópiala antes de guardar: no se vuelve a mostrar</span></p>
                     <CampoContrasena id={`pw-${c.id}`} compacto />
@@ -246,7 +260,11 @@ export function MisClientes({ fichas, docs, clientes, marcas, obs, esAdmin }: { 
                     aviso="Su cuenta se borra y deja de poder entrar. La ficha, los documentos y las observaciones se conservan." />
                 </div>
               ) : (
-                <FormAviso action={darAccesoCliente} className="space-y-3">
+                <FormAviso className="space-y-3" action={async (fd) => {
+                  const r = await darAccesoCliente(fd);
+                  if (!r?.error) setRecien((x) => ({ ...x, [c.id]: { email: String(fd.get("email") ?? "").trim().toLowerCase(), password: String(fd.get("password") ?? "") } }));
+                  return r;
+                }}>
                   <input type="hidden" name="id" value={c.id} />
                   <p className="text-sm text-muted">Crea el acceso del cliente. Pones tú el correo y la contraseña; él entra directamente, sin esperar ningún correo.</p>
                   <label className="block text-xs text-muted" htmlFor={`ae-${c.id}`}>Correo del cliente<input id={`ae-${c.id}`} name="email" type="email" required maxLength={254} className="input mt-1 !py-1.5" /></label>
