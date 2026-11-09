@@ -8,7 +8,7 @@ import { Submit } from "@/components/Submit";
 import { GraficaMeses } from "@/components/Graficos";
 import { Vacio } from "@/components/Ilustraciones";
 import { TablaClientes } from "@/components/vistas/TablaClientes";
-import { FASES, claveMes, eur0, fecha, primerNombre, ultimosMeses } from "@/lib/utils";
+import { FASES, claveMes, eur0, fecha, primerNombre, ultimosMeses, FASE_FINAL } from "@/lib/utils";
 import type { Cambio, ClienteColab } from "@/lib/types";
 
 /** "Hoy", "Ayer", "Hace 3 días" y, pasada una semana, la fecha. */
@@ -28,12 +28,12 @@ export function PanelColaborador({ nombre, clientes, verArchivados, sinLeer = 0,
   const suma = (cs: ClienteColab[]) => cs.reduce((a, c) => a + (c.comision ?? 0), 0);
   const pagados = clientes.filter((c) => c.pago === "paid");
   const cobrado = suma(pagados);
-  const tramitacion = suma(clientes.filter((c) => c.fase < 4));
-  const listosLista = activos.filter((c) => c.fase === 4 && c.pago === "none");
+  const tramitacion = suma(clientes.filter((c) => c.fase < FASE_FINAL));
+  const listosLista = activos.filter((c) => c.fase === FASE_FINAL && c.pago === "none");
   const solicitados = clientes.filter((c) => c.pago === "requested").length;
   const pendiente = suma(clientes.filter((c) => c.pago !== "paid"));
   const potencial = cobrado + pendiente;
-  const conteos = [0, 1, 2, 3, 4].map((f) => activos.filter((c) => c.fase === f).length);
+  const conteos = FASES.map((_, i) => i).map((f) => activos.filter((c) => c.fase === f).length);
   const meses = ultimosMeses(6);
   const porMes = meses.map((m) => suma(pagados.filter((c) => claveMes(c.pagado_at) === m.clave)));
   const esteMes = porMes[porMes.length - 1] ?? 0;
@@ -56,9 +56,9 @@ export function PanelColaborador({ nombre, clientes, verArchivados, sinLeer = 0,
     if (!n || h.fase_anterior == null) continue;
     const avanza = h.fase_nueva > h.fase_anterior;
     novedades.push({
-      clave: `f${h.cliente_id}-${h.fecha}`, cuando: h.fecha, tono: avanza && h.fase_nueva === 4 ? "na" : "net",
+      clave: `f${h.cliente_id}-${h.fecha}`, cuando: h.fecha, tono: avanza && h.fase_nueva === FASE_FINAL ? "na" : "net",
       texto: avanza
-        ? (h.fase_nueva === 4 ? <><b>{n}</b> ya tiene el CAE expedido</> : <><b>{n}</b> pasó a «{FASES[h.fase_nueva]}»</>)
+        ? (h.fase_nueva === FASE_FINAL ? <><b>{n}</b> ya tiene el CAE expedido</> : <><b>{n}</b> pasó a «{FASES[h.fase_nueva]}»</>)
         : <><b>{n}</b> volvió a «{FASES[h.fase_nueva]}»</>,
     });
   }
@@ -119,7 +119,7 @@ export function PanelColaborador({ nombre, clientes, verArchivados, sinLeer = 0,
         <dl className="relative flex flex-wrap gap-x-8 gap-y-1 border-t border-white/15 pt-2.5 text-sm lg:col-span-2">
           <div className="flex items-baseline gap-2"><dt className="text-white/75">Clientes que nos has pasado</dt><dd className="num text-lg">{clientes.length}</dd></div>
           <div className="flex items-baseline gap-2"><dt className="text-white/75">En tramitación</dt><dd className="num text-lg text-[#9DC0FF]">{eur0(tramitacion)}</dd></div>
-          <p className="text-white/75">{clientes.filter((c) => c.fase < 4).length} en trámite · {listosLista.length} por cobrar · {pagados.length} {plural(pagados.length, "pagado", "pagados")}</p>
+          <p className="text-white/75">{clientes.filter((c) => c.fase < FASE_FINAL).length} en trámite · {listosLista.length} por cobrar · {pagados.length} {plural(pagados.length, "pagado", "pagados")}</p>
         </dl>
       </section>
         <div className="entra tarjeta flex flex-col justify-center px-5 py-4" style={{ ["--i" as string]: 1 }}>

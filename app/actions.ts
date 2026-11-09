@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getSessionProfile } from "@/lib/auth";
 import { avisarMensajeNuevo } from "@/lib/avisos";
+import { FASE_FINAL } from "@/lib/utils";
 import { MENSAJE_BLOQUEO, ipDelCliente, limpiarFallos, loginBloqueado, registrarFallo } from "@/lib/intentos";
 
 export type Estado = { error?: string; ok?: string } | undefined;
@@ -154,7 +155,7 @@ export async function moverFase(fd: FormData): Promise<Estado> {
   if (!esUuid(id) || (delta !== 1 && delta !== -1)) return { error: "Petición no válida." };
   const { data } = await supabase.from("clientes").select("fase,colaborador_id").eq("id", id).single();
   if (!data) return { error: "No se encontró el cliente." };
-  const nueva = Math.min(4, Math.max(0, data.fase + delta));
+  const nueva = Math.min(FASE_FINAL, Math.max(0, data.fase + delta));
   if (nueva !== data.fase) {
     const { error } = await supabase.from("clientes").update({ fase: nueva }).eq("id", id);
     if (error) return { error: "No se pudo cambiar la fase." };
@@ -282,7 +283,7 @@ export async function moverFaseDirecto(fd: FormData): Promise<Estado> {
   if (!esUuid(id) || (delta !== 1 && delta !== -1)) return { error: "Petición no válida." };
   const { data } = await s.supabase.from("clientes_directos").select("fase").eq("id", id).maybeSingle();
   if (!data) return { error: "El cliente ya no existe." };
-  const nueva = Math.min(4, Math.max(0, data.fase + delta));
+  const nueva = Math.min(FASE_FINAL, Math.max(0, data.fase + delta));
   if (nueva !== data.fase) {
     const { error } = await s.supabase.from("clientes_directos").update({ fase: nueva }).eq("id", id);
     if (error) return { error: "No se pudo cambiar la fase." };
@@ -300,7 +301,7 @@ export async function cambiarCobroDirecto(fd: FormData): Promise<Estado> {
   if (!esUuid(id)) return { error: "Petición no válida." };
   const { data } = await s.supabase.from("clientes_directos").select("fase").eq("id", id).maybeSingle();
   if (!data) return { error: "El cliente ya no existe." };
-  if (cobrar && data.fase !== 4) return { error: "Solo se puede marcar como pagado cuando el CAE está expedido." };
+  if (cobrar && data.fase !== FASE_FINAL) return { error: "Solo se puede marcar como pagado cuando el CAE está expedido." };
   const { error } = await s.supabase.from("clientes_directos").update({ cobrado_at: cobrar ? new Date().toISOString() : null }).eq("id", id);
   if (error) return { error: "No se pudo guardar el pago." };
   refrescarMisClientes();
@@ -375,7 +376,7 @@ export async function anadirObservacion(fd: FormData): Promise<Estado> {
   const id = texto(fd, "id");
   const fase = Number(fd.get("fase"));
   const t = texto(fd, "texto");
-  if (!esUuid(id) || !Number.isInteger(fase) || fase < 0 || fase > 4) return { error: "Petición no válida." };
+  if (!esUuid(id) || !Number.isInteger(fase) || fase < 0 || fase > FASE_FINAL) return { error: "Petición no válida." };
   if (!t) return { error: "Escribe la observación." };
   if (t.length > MAX_OBS) return { error: `La observación no puede superar ${MAX_OBS} caracteres.` };
   const { error } = await s.supabase.from("clientes_directos_obs").insert({ cliente_id: id, fase, texto: t, autor: s.user.id });

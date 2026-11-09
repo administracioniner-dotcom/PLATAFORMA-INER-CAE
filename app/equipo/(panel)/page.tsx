@@ -1,7 +1,7 @@
 import { ListaColaboradores, type FilaColab } from "@/components/vistas/ListaColaboradores";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { requireStaff } from "@/lib/auth";
-import { claveMes, comisionDe, ultimosMeses } from "@/lib/utils";
+import { FASES, claveMes, comisionDe, ultimosMeses, FASE_FINAL } from "@/lib/utils";
 import type { ClienteStaff, Profile } from "@/lib/types";
 
 export default async function Colaboradores({ searchParams }: { searchParams: Promise<{ q?: string; f?: string }> }) {
@@ -14,7 +14,7 @@ export default async function Colaboradores({ searchParams }: { searchParams: Pr
     supabase.from("clientes").select("*").is("archivado_at", null),
     supabase.from("fase_log").select("fase_nueva,fecha").gte("fecha", desde),
   ]);
-  const avances = [0, 1, 2, 3, 4].map((f) => meses.map((m) => (log ?? []).filter((l) => l.fase_nueva === f && claveMes(l.fecha) === m.clave).length));
+  const avances = FASES.map((_, i) => i).map((f) => meses.map((m) => (log ?? []).filter((l) => l.fase_nueva === f && claveMes(l.fecha) === m.clave).length));
   const clientes = (cs ?? []) as ClienteStaff[];
   const comision = comisionDe;
   const filas: FilaColab[] = ((ps ?? []) as Profile[]).map((p) => {
@@ -22,9 +22,9 @@ export default async function Colaboradores({ searchParams }: { searchParams: Pr
     return {
       p, n: mios.length,
       pendientes: mios.filter((c) => c.pago === "requested").length,
-      porCobrar: mios.filter((c) => c.fase === 4 && c.pago !== "paid").reduce((a, c) => a + comision(c), 0),
+      porCobrar: mios.filter((c) => c.fase === FASE_FINAL && c.pago !== "paid").reduce((a, c) => a + comision(c), 0),
       valor: mios.reduce((a, c) => a + (c.mwh ?? 0) * c.precio_mwh, 0),
-      porFase: [0, 1, 2, 3, 4].map((fase) => mios.filter((c) => c.fase === fase).length),
+      porFase: FASES.map((_, i) => i).map((fase) => mios.filter((c) => c.fase === fase).length),
     };
   }).filter((r) => {
     const t = q.trim().toLowerCase();
@@ -34,7 +34,7 @@ export default async function Colaboradores({ searchParams }: { searchParams: Pr
     return true;
   });
   const tot = filas.reduce((a, r) => ({ n: a.n + r.n, pend: a.pend + r.pendientes, valor: a.valor + r.valor, porCobrar: a.porCobrar + r.porCobrar }), { n: 0, pend: 0, valor: 0, porCobrar: 0 });
-  const conteos = [0, 1, 2, 3, 4].map((i) => filas.reduce((a, r) => a + r.porFase[i], 0));
+  const conteos = FASES.map((_, i) => i).map((i) => filas.reduce((a, r) => a + r.porFase[i], 0));
   return (
     <>
       <AutoRefresh cada={60} />

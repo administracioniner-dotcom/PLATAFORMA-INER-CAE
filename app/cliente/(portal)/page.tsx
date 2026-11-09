@@ -22,7 +22,7 @@ export default async function MiProyecto() {
     supabase.from("clientes_directos_obs").select("id,cliente_id,fase,texto,created_at").eq("cliente_id", cli.id).order("created_at"),
   ]);
   const listos = new Set(((marcas ?? []) as MarcaDoc[]).filter((m) => m.listo).map((m) => m.documento_id));
-  const mios = ((docs ?? []) as FichaDoc[]).filter((d) => d.aporta === "cliente").map((d) => ({ id: d.id, nombre: d.nombre, ayuda: d.ayuda, listo: listos.has(d.id) }));
+  const mios = ((docs ?? []) as FichaDoc[]).filter((d) => d.aporta === "cliente").map((d) => ({ id: d.id, nombre: d.nombre, ayuda: d.ayuda, listo: listos.has(d.id), grupo: d.grupo }));
   const f2 = ficha as FichaTipo | null;
   return <ProyectoVista nombre={profile.nombre ?? cli.nombre} cli={cli} ficha={f2} mios={mios} obs={(obs ?? []) as ObsFase[]} />;
 }

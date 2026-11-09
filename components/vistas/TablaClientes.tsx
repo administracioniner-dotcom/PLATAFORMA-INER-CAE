@@ -4,7 +4,7 @@ import { solicitarPago } from "@/app/actions";
 import { FormAviso } from "@/components/FormAviso";
 import { Recorrido } from "@/components/Fase";
 import { Submit } from "@/components/Submit";
-import { FASES, FASE_COLOR, cx, eur, fecha, num } from "@/lib/utils";
+import { FASES, FASE_COLOR, cx, eur, fecha, num, FASE_FINAL } from "@/lib/utils";
 import type { ClienteColab } from "@/lib/types";
 
 const ORDENES = [
@@ -15,17 +15,17 @@ type Orden = (typeof ORDENES)[number][0];
 type Filtro = "todos" | "listos" | "tramite" | "solicitado" | "pagados";
 const coincide: Record<Filtro, (c: ClienteColab) => boolean> = {
   todos: () => true,
-  listos: (c) => c.fase === 4 && c.pago === "none",
-  tramite: (c) => c.fase < 4,
+  listos: (c) => c.fase === FASE_FINAL && c.pago === "none",
+  tramite: (c) => c.fase < FASE_FINAL,
   solicitado: (c) => c.pago === "requested",
   pagados: (c) => c.pago === "paid",
 };
 
-/** Las cinco fases con la fecha en que se alcanzó cada una, y las del pago debajo. */
+/** Las fases con la fecha en que se alcanzó cada una, y las del pago debajo. */
 function Linea({ c, fechas }: { c: ClienteColab; fechas: (string | null)[] }) {
   return (
     <div>
-      <ol className="grid grid-cols-5 gap-1.5">
+      <ol className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
         {FASES.map((f, i) => {
           const hecho = i <= c.fase;
           return (
@@ -49,7 +49,7 @@ function Linea({ c, fechas }: { c: ClienteColab; fechas: (string | null)[] }) {
 function Cobro({ c }: { c: ClienteColab }) {
   if (c.pago === "paid") return <span className="inline-block rounded-full bg-batt-50 px-3 py-1 text-xs font-bold text-batt-700">Pagado · {fecha(c.pagado_at)}</span>;
   if (c.pago === "requested") return <span className="inline-block rounded-full bg-sun-50 px-3 py-1 text-xs font-bold text-sun-700">Pago solicitado</span>;
-  if (c.fase === 4) return <FormAviso action={solicitarPago}><input type="hidden" name="id" value={c.id} /><Submit className="btn-primary !py-1.5" pendiente="Solicitando…">Solicitar pago</Submit></FormAviso>;
+  if (c.fase === FASE_FINAL) return <FormAviso action={solicitarPago}><input type="hidden" name="id" value={c.id} /><Submit className="btn-primary !py-1.5" pendiente="Solicitando…">Solicitar pago</Submit></FormAviso>;
   return <span className="text-xs text-muted">Podrás solicitarlo cuando se expida el CAE</span>;
 }
 

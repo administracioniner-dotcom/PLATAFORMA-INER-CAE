@@ -5,7 +5,7 @@ import { ListaConversaciones, type ItemLista } from "@/components/mensajes/Lista
 import type { Sugerencia } from "@/components/mensajes/Compositor";
 import { colorDe, conversaciones } from "@/lib/mensajes";
 import { requireStaff } from "@/lib/auth";
-import { FASES, comisionDe, cx, eur0, fecha, fechaLista, iniciales } from "@/lib/utils";
+import { FASES, comisionDe, cx, eur0, fecha, fechaLista, iniciales, FASE_FINAL } from "@/lib/utils";
 import type { Mensaje, Profile } from "@/lib/types";
 
 // Respuestas que se repiten. Rellenan la caja y se pueden editar antes de enviar.
@@ -89,7 +89,7 @@ export default async function MensajesEquipo({ searchParams }: { searchParams: P
             volverHref="/equipo/mensajes" iniciales={iniciales(nombre)} color={colorDe(actual.id)} titulo={nombre}
             subtitulo={cliente ? `Conversación sobre ${cliente.nombre}` : "Conversación general"}
             estado={cliente ? (cliente.pago === "paid" ? "Pagado" : cliente.pago === "requested" ? "Pago solicitado" : FASES[cliente.fase]) : undefined}
-            tono={cliente && (cliente.fase === 4 || cliente.pago === "paid") ? "batt" : "net"}
+            tono={cliente && (cliente.fase === FASE_FINAL || cliente.pago === "paid") ? "batt" : "net"}
             verHref={cliente ? `/equipo/colaboradores/${actual.id}` : undefined}
           />
         }
@@ -122,7 +122,7 @@ export default async function MensajesEquipo({ searchParams }: { searchParams: P
               {vivos.slice(0, 8).map((x) => (
                 <li key={x.id} className="flex items-center justify-between gap-2 py-1.5">
                   <span className="truncate">{x.nombre}</span>
-                  <span className={cx("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold", x.fase === 4 ? "bg-batt-50 text-batt-700" : "bg-net-50 text-net-700")}>{x.pago === "paid" ? "Pagado" : x.pago === "requested" ? "Pago solicitado" : FASES[x.fase]}</span>
+                  <span className={cx("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold", x.fase === FASE_FINAL ? "bg-batt-50 text-batt-700" : "bg-net-50 text-net-700")}>{x.pago === "paid" ? "Pagado" : x.pago === "requested" ? "Pago solicitado" : FASES[x.fase]}</span>
                 </li>
               ))}
             </ul>

@@ -8,7 +8,7 @@ import { FormAviso } from "@/components/FormAviso";
 import { Submit } from "@/components/Submit";
 import { avisar } from "@/lib/avisar";
 import type { ClienteDirecto, FichaDoc, FichaTipo, MarcaDoc, ObsFase } from "@/lib/types";
-import { FASES, FASE_COLOR, cx, eur, eur0, fecha, fechaHora, num } from "@/lib/utils";
+import { FASES, FASE_COLOR, cx, eur, eur0, fecha, fechaHora, num, FASE_FINAL } from "@/lib/utils";
 
 const FILTROS = [["todos", "Todos"], ["tram", "En tramitación"], ["pend", "Por pagar"], ["ok", "Pagados"], ["docs", "Faltan documentos"]] as const;
 const ORDENES = [["rec", "Más recientes"], ["nom", "Nombre (A-Z)"], ["fase", "Fase (más avanzada)"], ["imp", "Importe (mayor)"], ["docs", "Documentos que faltan"]] as const;
@@ -18,7 +18,7 @@ const CLAVE_ESTADO = "iner-mis-clientes";
 const clave = (c: string, d: string) => `${c}:${d}`;
 const mapa = (ms: MarcaDoc[]) => new Map(ms.map((m) => [clave(m.cliente_id, m.documento_id), m]));
 const importe = (c: ClienteDirecto) => (c.mwh == null ? null : c.mwh * c.precio_mwh);
-const estado = (c: ClienteDirecto) => (c.cobrado_at ? "ok" : c.fase === 4 ? "pend" : "tram");
+const estado = (c: ClienteDirecto) => (c.cobrado_at ? "ok" : c.fase === FASE_FINAL ? "pend" : "tram");
 const viejo = (iso: string | null | undefined, anios: number) => { if (!iso) return false; const l = new Date(); l.setFullYear(l.getFullYear() - anios); return new Date(iso) < l; };
 
 export function MisClientes({ fichas, docs, clientes, marcas, obs, esAdmin }: { fichas: FichaTipo[]; docs: FichaDoc[]; clientes: ClienteDirecto[]; marcas: MarcaDoc[]; obs: ObsFase[]; esAdmin: boolean }) {
@@ -294,8 +294,8 @@ export function MisClientes({ fichas, docs, clientes, marcas, obs, esAdmin }: { 
 
         <div className="flex flex-wrap items-center gap-2 border-t border-line bg-soft px-4 py-3">
           <FormAviso action={moverFaseDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="-1" /><button disabled={c.fase === 0} className="btn btn-ghost !px-4 !py-1.5">← Fase anterior</button></FormAviso>
-          <FormAviso action={moverFaseDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="1" /><button disabled={c.fase === 4} className="btn btn-ghost !px-4 !py-1.5">Fase siguiente →</button></FormAviso>
-          {c.fase === 4 && !c.cobrado_at && <FormAviso action={cambiarCobroDirecto}><input type="hidden" name="id" value={c.id} /><button className="btn btn-primary !px-4 !py-1.5">Marcar pagado</button></FormAviso>}
+          <FormAviso action={moverFaseDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="1" /><button disabled={c.fase === FASE_FINAL} className="btn btn-ghost !px-4 !py-1.5">Fase siguiente →</button></FormAviso>
+          {c.fase === FASE_FINAL && !c.cobrado_at && <FormAviso action={cambiarCobroDirecto}><input type="hidden" name="id" value={c.id} /><button className="btn btn-primary !px-4 !py-1.5">Marcar pagado</button></FormAviso>}
           {c.cobrado_at && <FormAviso action={cambiarCobroDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="accion" value="quitar" /><button className="text-xs font-semibold text-net-700 underline underline-offset-2">Quitar el pago</button></FormAviso>}
           <div className="ml-auto"><BotonBorrar action={eliminarClienteDirecto} campos={{ id: c.id }} boton="Eliminar cliente…"
             aviso={`Se borran el cliente${c.usuario_id ? ", su acceso al portal" : ""} y sus documentos marcados${c.cobrado_at ? ", y se pierde un pago ya registrado" : ""}. No se puede deshacer.`} /></div>
@@ -406,7 +406,7 @@ export function MisClientes({ fichas, docs, clientes, marcas, obs, esAdmin }: { 
                         {falta(c)}
                         <span className="flex flex-wrap items-center gap-1.5">
                           {cad.length > 0 && <span title={`La fecha de «${cad[0].nombre}» tiene más de ${cad[0].aviso_anios} años`} className="whitespace-nowrap rounded-full bg-sun-50 px-2.5 py-0.5 text-xs font-bold text-sun-700">⚠ Verificar factura</span>}
-                          {c.fase === 4 && !c.cobrado_at
+                          {c.fase === FASE_FINAL && !c.cobrado_at
                             ? <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); cobrar(c.id); }}
                                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); cobrar(c.id); } }}
                                 className="btn btn-primary !px-3 !py-0.5 !text-xs">Marcar pagado</span>
@@ -426,7 +426,7 @@ export function MisClientes({ fichas, docs, clientes, marcas, obs, esAdmin }: { 
           </aside>
         </div>
       ) : (
-        <div className="grid grid-flow-col auto-cols-[minmax(15rem,1fr)] gap-3 overflow-x-auto pb-2 md:grid-flow-row md:grid-cols-5 md:auto-cols-auto">
+        <div className="grid grid-flow-col auto-cols-[minmax(15rem,1fr)] gap-3 overflow-x-auto pb-2 md:grid-flow-row md:grid-cols-3 md:auto-cols-auto xl:grid-cols-6">
           {FASES.map((nombre, i) => {
             const cs = visibles.filter((c) => c.fase === i);
             return (
@@ -444,8 +444,8 @@ export function MisClientes({ fichas, docs, clientes, marcas, obs, esAdmin }: { 
                       <p className="mt-1">{falta(c)}</p>
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
                         <FormAviso action={moverFaseDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="-1" /><button disabled={c.fase === 0} aria-label="Volver a la fase anterior" className="btn btn-ghost !px-3 !py-0.5">←</button></FormAviso>
-                        <FormAviso action={moverFaseDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="1" /><button disabled={c.fase === 4} aria-label="Pasar a la fase siguiente" className="btn btn-ghost !px-3 !py-0.5">→</button></FormAviso>
-                        {c.cobrado_at ? cobro(c) : c.fase === 4 && <FormAviso action={cambiarCobroDirecto}><input type="hidden" name="id" value={c.id} /><button className="btn btn-primary !px-3 !py-0.5">Marcar pagado</button></FormAviso>}
+                        <FormAviso action={moverFaseDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="1" /><button disabled={c.fase === FASE_FINAL} aria-label="Pasar a la fase siguiente" className="btn btn-ghost !px-3 !py-0.5">→</button></FormAviso>
+                        {c.cobrado_at ? cobro(c) : c.fase === FASE_FINAL && <FormAviso action={cambiarCobroDirecto}><input type="hidden" name="id" value={c.id} /><button className="btn btn-primary !px-3 !py-0.5">Marcar pagado</button></FormAviso>}
                         <button type="button" onClick={() => { abrir(c.id); setVista("lista"); }} className="ml-auto text-xs font-semibold text-net-700 underline underline-offset-2">Detalle</button>
                       </div>
                     </li>

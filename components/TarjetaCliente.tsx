@@ -3,7 +3,7 @@ import { useState } from "react";
 import { eliminarCliente, guardarDatosCliente, marcarPagado, moverFase } from "@/app/actions";
 import { FormAviso } from "@/components/FormAviso";
 import { Submit } from "@/components/Submit";
-import { FASE_COLOR, VALOR_MWH, eur, fecha, num } from "@/lib/utils";
+import { FASE_COLOR, VALOR_MWH, eur, fecha, num, FASE_FINAL } from "@/lib/utils";
 
 export type DatosTarjeta = {
   id: string; nombre: string; fase: number; mwh: number | null; pct: number; precio_mwh: number;
@@ -62,8 +62,8 @@ export function TarjetaCliente({ c, puedeEliminar = false }: { c: DatosTarjeta; 
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <FormAviso action={moverFase}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="-1" /><button disabled={c.fase === 0} aria-label="Volver a la fase anterior" className="btn btn-ghost !px-3 !py-0.5">←</button></FormAviso>
-        <FormAviso action={moverFase}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="1" /><button disabled={c.fase === 4} aria-label="Pasar a la fase siguiente" className="btn btn-ghost !px-3 !py-0.5">→</button></FormAviso>
-        {c.fase === 4 && c.pago !== "paid" && (
+        <FormAviso action={moverFase}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="1" /><button disabled={c.fase === FASE_FINAL} aria-label="Pasar a la fase siguiente" className="btn btn-ghost !px-3 !py-0.5">→</button></FormAviso>
+        {c.fase === FASE_FINAL && c.pago !== "paid" && (
           <FormAviso action={marcarPagado}><input type="hidden" name="id" value={c.id} /><button className="btn btn-primary !px-3 !py-0.5">Marcar pagado</button></FormAviso>
         )}
         <button type="button" onClick={() => { setAbierta(!abierta); setBorrando(false); }} aria-expanded={abierta} className="ml-auto text-xs font-semibold text-net-700 underline underline-offset-2">{abierta ? "Cerrar" : "Editar"}</button>
