@@ -9,6 +9,7 @@ import { fecha } from "@/lib/utils";
 
 const ROLES: Record<string, string> = { colaborador: "Colaborador", delegado: "Delegado", admin: "Administrador" };
 // Los clientes se crean desde «Mis clientes»; aquí solo aparecen en la lista de cuentas.
+const GRUPOS: [string, string][] = [["admin", "Administradores"], ["delegado", "Delegados"], ["colaborador", "Colaboradores"], ["cliente", "Clientes"]];
 const ETIQUETA_ROL: Record<string, string> = { ...ROLES, cliente: "Cliente" };
 
 export default async function Invitar() {
@@ -45,8 +46,17 @@ export default async function Invitar() {
       <div className="space-y-6">
         <section>
           <h2 className="mb-3 text-lg font-bold">Cuentas</h2>
-          <ul className="divide-y divide-line tarjeta">
-            {(personas ?? []).map((p) => (
+          <div className="space-y-3">
+          {GRUPOS.map(([rol, titulo]) => {
+            const delGrupo = (personas ?? []).filter((x) => x.rol === rol);
+            return (
+          <details key={rol} open={rol !== "cliente"} className="tarjeta">
+            <summary className="flex cursor-pointer items-center justify-between px-4 py-3 font-bold">
+              <span>{titulo}</span><span className="rounded-full bg-soft px-2.5 py-0.5 text-xs text-muted">{delGrupo.length}</span>
+            </summary>
+          <ul className="divide-y divide-line border-t border-line">
+            {delGrupo.length === 0 && <li className="px-4 py-3 text-sm text-muted">Ninguna cuenta.</li>}
+            {delGrupo.map((p) => (
               <li key={p.id} className="px-4 py-3 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span><span className="font-semibold">{p.nombre ?? p.email}</span> <span className="text-muted">{p.email}</span></span>
@@ -96,6 +106,10 @@ export default async function Invitar() {
               </li>
             ))}
           </ul>
+          </details>
+            );
+          })}
+          </div>
         </section>
         {pendientes.length > 0 && (
           <section>
