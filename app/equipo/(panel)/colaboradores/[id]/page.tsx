@@ -15,7 +15,7 @@ export default async function ColaboradorDetalle({ params, searchParams }: { par
   if (!p) notFound();
   return (
     <>
-      <AutoRefresh cada={30} />
+      <AutoRefresh cada={60} />
       <TableroCliente col={p as Profile} clientes={(data ?? []) as ClienteStaff[]} verArchivados={verArchivados} esAdmin={profile.rol === "admin"} />
     </>
   );

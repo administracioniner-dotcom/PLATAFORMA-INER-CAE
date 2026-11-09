@@ -136,7 +136,7 @@ export default async function MensajesEquipo({ searchParams }: { searchParams: P
 
   return (
     <>
-      <AutoRefresh cada={15} />
+      <AutoRefresh cada={30} />
       <h1 className="mb-3 text-3xl font-bold tracking-[-0.02em]">Mensajes</h1>
       <div className="tarjeta grid h-[calc(100dvh-13rem)] min-h-[28rem] overflow-hidden md:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[18rem_minmax(0,1fr)_16.5rem]">
         <div className={cx("min-h-0 flex-col border-line md:flex md:border-r", vista === "chat" ? "hidden" : "flex")}>
