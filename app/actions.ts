@@ -58,7 +58,7 @@ export async function iniciarSesion(_: Estado, fd: FormData): Promise<Estado> {
     await supabase.auth.signOut();
     return { error: "Tu cuenta no está activa. Contacta con INER." };
   }
-  redirect(profile.rol === "colaborador" ? "/" : "/equipo");
+  redirect(profile.rol === "colaborador" ? "/" : profile.rol === "cliente" ? "/cliente" : "/equipo");
 }
 
 export async function cerrarSesion() {
@@ -234,7 +234,7 @@ async function sesionAdmin() {
   return s && s.profile.rol === "admin" ? s : null;
 }
 const decimal = (fd: FormData, campo: string) => Number(texto(fd, campo).replace(",", "."));
-const refrescarMisClientes = () => { revalidatePath("/equipo/mis-clientes"); revalidatePath("/equipo/mis-clientes/fichas"); };
+const refrescarMisClientes = () => { revalidatePath("/equipo/mis-clientes"); revalidatePath("/equipo/mis-clientes/fichas"); revalidatePath("/cliente"); };
 
 export async function crearClienteDirecto(fd: FormData): Promise<Estado> {
   const s = await sesionEquipo();
@@ -291,7 +291,7 @@ export async function moverFaseDirecto(fd: FormData): Promise<Estado> {
   return { ok: "Fase actualizada" };
 }
 
-/** Marca el cobro (solo con el CAE expedido) o lo quita. */
+/** Marca que INER ya ha pagado al cliente (solo con el CAE expedido) o lo quita. La columna se sigue llamando cobrado_at. */
 export async function cambiarCobroDirecto(fd: FormData): Promise<Estado> {
   const s = await sesionEquipo();
   if (!s) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
@@ -300,11 +300,11 @@ export async function cambiarCobroDirecto(fd: FormData): Promise<Estado> {
   if (!esUuid(id)) return { error: "Petición no válida." };
   const { data } = await s.supabase.from("clientes_directos").select("fase").eq("id", id).maybeSingle();
   if (!data) return { error: "El cliente ya no existe." };
-  if (cobrar && data.fase !== 4) return { error: "Solo se puede marcar como cobrado cuando el CAE está expedido." };
+  if (cobrar && data.fase !== 4) return { error: "Solo se puede marcar como pagado cuando el CAE está expedido." };
   const { error } = await s.supabase.from("clientes_directos").update({ cobrado_at: cobrar ? new Date().toISOString() : null }).eq("id", id);
-  if (error) return { error: "No se pudo guardar el cobro." };
+  if (error) return { error: "No se pudo guardar el pago." };
   refrescarMisClientes();
-  return { ok: cobrar ? "Marcado como cobrado" : "Cobro quitado" };
+  return { ok: cobrar ? "Marcado como pagado" : "Pago quitado" };
 }
 
 export async function eliminarClienteDirecto(fd: FormData): Promise<Estado> {
@@ -356,6 +356,107 @@ export async function guardarFechaDocumento(clienteId: string, documentoId: stri
   return { ok: "Fecha guardada" };
 }
 
+/* ---------- Observaciones por fase (las ve el cliente) y acceso del cliente ---------- */
+const MAX_OBS = 1000;
+
+export async function anadirObservacion(fd: FormData): Promise<Estado> {
+  const s = await sesionEquipo();
+  if (!s) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
+  const id = texto(fd, "id");
+  const fase = Number(fd.get("fase"));
+  const t = texto(fd, "texto");
+  if (!esUuid(id) || !Number.isInteger(fase) || fase < 0 || fase > 4) return { error: "Petición no válida." };
+  if (!t) return { error: "Escribe la observación." };
+  if (t.length > MAX_OBS) return { error: `La observación no puede superar ${MAX_OBS} caracteres.` };
+  const { error } = await s.supabase.from("clientes_directos_obs").insert({ cliente_id: id, fase, texto: t, autor: s.user.id });
+  if (error) return { error: "No se pudo guardar la observación." };
+  refrescarMisClientes();
+  return { ok: "Observación guardada. La ve el cliente." };
+}
+
+export async function borrarObservacion(fd: FormData): Promise<Estado> {
+  const s = await sesionEquipo();
+  if (!s) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
+  const id = Number(fd.get("id"));
+  if (!Number.isInteger(id) || id < 1) return { error: "Petición no válida." };
+  const { data, error } = await s.supabase.from("clientes_directos_obs").delete().eq("id", id).select("id");
+  if (error || !data?.length) return { error: "No se pudo borrar la observación." };
+  refrescarMisClientes();
+  return { ok: "Observación borrada." };
+}
+
+/** Crea la cuenta del cliente (correo y contraseña que pone el equipo) y la enlaza con su ficha. */
+export async function darAccesoCliente(fd: FormData): Promise<Estado> {
+  const s = await sesionEquipo();
+  if (!s) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
+  const id = texto(fd, "id");
+  const email = texto(fd, "email").toLowerCase();
+  const password = String(fd.get("password") ?? "");
+  if (!esUuid(id)) return { error: "Petición no válida." };
+  if (!EMAIL.test(email) || email.length > 254) return { error: "Correo no válido." };
+  const problema = errorContrasena(password);
+  if (problema) return { error: problema };
+  const { data: cli } = await s.supabase.from("clientes_directos").select("id,nombre,usuario_id").eq("id", id).maybeSingle();
+  if (!cli) return { error: "El cliente ya no existe." };
+  if (cli.usuario_id) return { error: "Este cliente ya tiene acceso." };
+  const clave = crypto.randomUUID();
+  const servicio = createServiceClient();
+  const { error: e1 } = await servicio.from("invitaciones").upsert({ email, rol: "cliente", nombre: cli.nombre, invitado_por: s.user.id, clave });
+  if (e1) return { error: "No se pudo registrar la cuenta." };
+  const { data: creada, error: e2 } = await servicio.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { clave_alta: clave, nombre: cli.nombre } });
+  if (e2 || !creada.user) {
+    const yaExiste = !!e2 && /already|registered|exists/i.test(e2.message);
+    if (yaExiste) await servicio.from("invitaciones").update({ clave: null }).eq("email", email);
+    else await servicio.from("invitaciones").delete().eq("email", email);
+    return { error: yaExiste ? "Ya existe una cuenta con ese correo." : "No se pudo crear la cuenta. Inténtalo de nuevo." };
+  }
+  const { error: e3 } = await servicio.from("clientes_directos").update({ usuario_id: creada.user.id, email }).eq("id", id);
+  if (e3) {
+    await servicio.auth.admin.deleteUser(creada.user.id);
+    return { error: "No se pudo enlazar la cuenta con el cliente." };
+  }
+  await auditar(s.user.id, "ACCESO_CLIENTE_CREADO", creada.user.id, { email, cliente: id });
+  refrescarMisClientes();
+  return { ok: `Acceso creado para ${email}. Ya puede entrar con esa contraseña.` };
+}
+
+/** Quita el acceso: se borra la cuenta del cliente, pero se conserva su ficha, documentos y observaciones. */
+export async function quitarAccesoCliente(fd: FormData): Promise<Estado> {
+  const s = await sesionEquipo();
+  if (!s) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
+  const id = texto(fd, "id");
+  if (!esUuid(id)) return { error: "Petición no válida." };
+  const { data: cli } = await s.supabase.from("clientes_directos").select("usuario_id,email").eq("id", id).maybeSingle();
+  if (!cli?.usuario_id) return { error: "Este cliente no tiene acceso." };
+  const servicio = createServiceClient();
+  const { data: cuenta } = await servicio.from("profiles").select("rol").eq("id", cli.usuario_id).maybeSingle();
+  if (cuenta?.rol !== "cliente") return { error: "Esa cuenta no es de un cliente." };
+  const { error } = await servicio.auth.admin.deleteUser(cli.usuario_id);
+  if (error) return { error: "No se pudo quitar el acceso." };
+  await servicio.from("invitaciones").delete().eq("email", cli.email ?? "");
+  await servicio.from("clientes_directos").update({ usuario_id: null }).eq("id", id);
+  await auditar(s.user.id, "ACCESO_CLIENTE_QUITADO", cli.usuario_id, { cliente: id });
+  refrescarMisClientes();
+  return { ok: "Acceso quitado." };
+}
+
+/** El equipo fija una contraseña nueva al cliente. */
+export async function contrasenaCliente(fd: FormData): Promise<Estado> {
+  const s = await sesionEquipo();
+  if (!s) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
+  const id = texto(fd, "id");
+  const password = String(fd.get("password") ?? "");
+  if (!esUuid(id)) return { error: "Petición no válida." };
+  const problema = errorContrasena(password);
+  if (problema) return { error: problema };
+  const { data: cli } = await s.supabase.from("clientes_directos").select("usuario_id").eq("id", id).maybeSingle();
+  if (!cli?.usuario_id) return { error: "Este cliente no tiene acceso." };
+  const { error } = await createServiceClient().auth.admin.updateUserById(cli.usuario_id, { password });
+  if (error) return { error: "No se pudo cambiar la contraseña." };
+  await auditar(s.user.id, "CONTRASENA_CLIENTE_CAMBIADA", cli.usuario_id);
+  return { ok: "Contraseña cambiada. Ya puede entrar con la nueva." };
+}
+
 /* ---------- Fichas y sus documentos (solo administradores) ---------- */
 const MAX_GRUPO = 120, MAX_DOC = 200, MAX_AYUDA = 400;
 function leerFicha(fd: FormData) {
@@ -367,13 +468,14 @@ function leerFicha(fd: FormData) {
 function leerDocumento(fd: FormData) {
   const grupo = texto(fd, "grupo"), nombre = texto(fd, "nombre"), ayuda = texto(fd, "ayuda");
   const depende = texto(fd, "depende_de"), anios = texto(fd, "aviso_anios");
+  const aporta = texto(fd, "aporta") === "iner" ? "iner" : "cliente";
   if (!grupo || grupo.length > MAX_GRUPO) return { error: `El grupo (la carpeta) debe tener entre 1 y ${MAX_GRUPO} caracteres.` } as const;
   if (!nombre || nombre.length > MAX_DOC) return { error: `Escribe el nombre del documento (hasta ${MAX_DOC} caracteres).` } as const;
   if (ayuda.length > MAX_AYUDA) return { error: `La ayuda no puede superar ${MAX_AYUDA} caracteres.` } as const;
   if (depende && !esUuid(depende)) return { error: "El documento del que depende no es válido." } as const;
   const aviso = anios === "" ? null : Number(anios);
   if (aviso !== null && (!Number.isInteger(aviso) || aviso < 1 || aviso > 50)) return { error: "Los años de aviso deben ser un número entero entre 1 y 50." } as const;
-  return { grupo, nombre, ayuda: ayuda || null, depende_de: depende || null, aviso_anios: aviso } as const;
+  return { grupo, nombre, ayuda: ayuda || null, depende_de: depende || null, aviso_anios: aviso, aporta } as const;
 }
 
 export async function crearFicha(_: Estado, fd: FormData): Promise<Estado> {

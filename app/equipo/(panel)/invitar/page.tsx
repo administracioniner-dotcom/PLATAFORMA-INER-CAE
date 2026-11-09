@@ -8,6 +8,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { fecha } from "@/lib/utils";
 
 const ROLES: Record<string, string> = { colaborador: "Colaborador", delegado: "Delegado", admin: "Administrador" };
+// Los clientes se crean desde «Mis clientes»; aquí solo aparecen en la lista de cuentas.
+const ETIQUETA_ROL: Record<string, string> = { ...ROLES, cliente: "Cliente" };
 
 export default async function Invitar() {
   const { supabase, profile } = await requireStaff();
@@ -48,7 +50,7 @@ export default async function Invitar() {
               <li key={p.id} className="px-4 py-3 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span><span className="font-semibold">{p.nombre ?? p.email}</span> <span className="text-muted">{p.email}</span></span>
-                  <span className="text-muted">{ROLES[p.rol]} · {desactivadas.has(p.id) ? <span className="font-semibold text-red-700">Desactivado</span> : p.estado === "activo" ? "Activo" : "Aún no ha entrado"}</span>
+                  <span className="text-muted">{ETIQUETA_ROL[p.rol]} · {desactivadas.has(p.id) ? <span className="font-semibold text-red-700">Desactivado</span> : p.estado === "activo" ? "Activo" : "Aún no ha entrado"}</span>
                 </div>
                 <details className="mt-2">
                   <summary className="w-fit cursor-pointer text-xs font-semibold text-net-700 underline underline-offset-2">Gestionar cuenta</summary>
@@ -103,7 +105,7 @@ export default async function Invitar() {
                 <li key={i.email} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
                   <span>{i.nombre ?? i.email} <span className="text-muted">{i.email}</span></span>
                   <span className="flex items-center gap-3 text-muted">
-                    {ROLES[i.rol]} · {fecha(i.created_at)}
+                    {ETIQUETA_ROL[i.rol]} · {fecha(i.created_at)}
                     <FormEstado action={borrarInvitacion}>
                       <input type="hidden" name="email" value={i.email} />
                       <Submit className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-50" pendiente="Borrando…">Borrar</Submit>

@@ -89,6 +89,11 @@ export function FichasVista({ fichas, docs, usos }: { fichas: FichaTipo[]; docs:
                                     {mias.filter((x) => x.id !== d.id).map((x) => <option key={x.id} value={x.id}>{x.nombre}</option>)}
                                   </select></div>
                                 <div><label className="label !text-xs" htmlFor={`dy-${d.id}`}>Pide fecha y avisa a los (años) <span className="font-normal text-muted">(vacío: no)</span></label><input id={`dy-${d.id}`} name="aviso_anios" inputMode="numeric" defaultValue={d.aviso_anios ?? ""} className="input !bg-panel !py-1.5" /></div>
+                                <div><label className="label !text-xs" htmlFor={`dp-${d.id}`}>Lo aporta</label>
+                                  <select id={`dp-${d.id}`} name="aporta" defaultValue={d.aporta} className="input !bg-panel !py-1.5">
+                                    <option value="cliente">El cliente</option>
+                                    <option value="iner">INER</option>
+                                  </select></div>
                                 <Submit className="btn-primary !py-1.5 sm:col-span-2" pendiente="Guardando…">Guardar documento</Submit>
                               </FormEstado>
                               <BotonBorrar action={eliminarDocumento} campos={{ id: d.id }} boton="Quitar documento…" confirmar="Sí, quitar"
@@ -116,6 +121,11 @@ export function FichasVista({ fichas, docs, usos }: { fichas: FichaTipo[]; docs:
                   {mias.map((x) => <option key={x.id} value={x.id}>{x.nombre}</option>)}
                 </select></div>
               <div><label className="label !text-xs" htmlFor={`ay-${f.id}`}>Pide fecha y avisa a los (años) <span className="font-normal text-muted">(vacío: no)</span></label><input id={`ay-${f.id}`} name="aviso_anios" inputMode="numeric" placeholder="Por ejemplo, 3" className="input !bg-panel !py-1.5" /></div>
+              <div><label className="label !text-xs" htmlFor={`ap-${f.id}`}>Lo aporta</label>
+                <select id={`ap-${f.id}`} name="aporta" defaultValue="cliente" className="input !bg-panel !py-1.5">
+                  <option value="cliente">El cliente</option>
+                  <option value="iner">INER</option>
+                </select></div>
               <Submit className="btn-primary !py-1.5 sm:col-span-2" pendiente="Añadiendo…">Añadir documento</Submit>
             </FormEstado>
           </section>
