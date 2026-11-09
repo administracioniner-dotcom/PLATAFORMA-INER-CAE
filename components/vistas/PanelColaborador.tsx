@@ -117,7 +117,7 @@ export function PanelColaborador({ nombre, clientes, verArchivados, sinLeer = 0,
           ) : null}
         </div>
         <dl className="relative flex flex-wrap gap-x-8 gap-y-1 border-t border-white/15 pt-2.5 text-sm lg:col-span-2">
-          <div className="flex items-baseline gap-2"><dt className="text-white/75">Clientes que nos has pasado</dt><dd className="num text-lg">{clientes.length}</dd></div>
+          <div className="flex items-baseline gap-2"><dt className="text-white/75">Clientes en gestión</dt><dd className="num text-lg">{clientes.length}</dd></div>
           <div className="flex items-baseline gap-2"><dt className="text-white/75">En tramitación</dt><dd className="num text-lg text-[#9DC0FF]">{eur0(tramitacion)}</dd></div>
           <p className="text-white/75">{clientes.filter((c) => c.fase < FASE_FINAL).length} en trámite · {listosLista.length} por cobrar · {pagados.length} {plural(pagados.length, "pagado", "pagados")}</p>
         </dl>
