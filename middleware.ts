@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLICAS = ["/login", "/equipo/login"];
+const PUBLICAS = ["/login", "/equipo/login", "/cliente/login"];
 
 export async function middleware(req: NextRequest) {
   let res = NextResponse.next({ request: req });
@@ -28,7 +28,7 @@ export async function middleware(req: NextRequest) {
   const publica = PUBLICAS.some((p) => path === p || path.startsWith(p + "/"));
   if (!user && !publica) {
     const url = req.nextUrl.clone();
-    url.pathname = path.startsWith("/equipo") ? "/equipo/login" : "/login";
+    url.pathname = path.startsWith("/equipo") ? "/equipo/login" : path.startsWith("/cliente") ? "/cliente/login" : "/login";
     url.search = "";
     return NextResponse.redirect(url);
   }

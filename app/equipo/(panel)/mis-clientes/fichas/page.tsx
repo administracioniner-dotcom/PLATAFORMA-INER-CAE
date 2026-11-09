@@ -8,7 +8,7 @@ export default async function Fichas() {
   if (profile.rol !== "admin") redirect("/equipo/mis-clientes");
   const [{ data: fs }, { data: ds }, { data: cs }] = await Promise.all([
     supabase.from("fichas_tipo").select("id,codigo,nombre").order("codigo"),
-    supabase.from("fichas_documento").select("id,ficha_id,grupo,nombre,ayuda,depende_de,aviso_anios,orden").order("orden"),
+    supabase.from("fichas_documento").select("id,ficha_id,grupo,nombre,ayuda,depende_de,aviso_anios,orden,aporta").order("orden"),
     supabase.from("clientes_directos").select("ficha_id"),
   ]);
   const usos: Record<string, number> = {};

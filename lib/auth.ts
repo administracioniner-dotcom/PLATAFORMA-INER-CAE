@@ -17,6 +17,7 @@ export const getSessionProfile = cache(async () => {
 export async function requireColaborador() {
   const s = await getSessionProfile();
   if (!s.user || !s.profile) redirect("/login");
+  if (s.profile.rol === "cliente") redirect("/cliente");
   if (s.profile.rol !== "colaborador") redirect("/equipo");
   return { ...s, profile: s.profile };
 }
@@ -24,6 +25,15 @@ export async function requireColaborador() {
 export async function requireStaff() {
   const s = await getSessionProfile();
   if (!s.user || !s.profile) redirect("/equipo/login");
+  if (s.profile.rol === "cliente") redirect("/cliente");
   if (s.profile.rol === "colaborador") redirect("/");
+  return { ...s, profile: s.profile };
+}
+
+/** Cliente directo de INER: solo entra a su propio portal. */
+export async function requireCliente() {
+  const s = await getSessionProfile();
+  if (!s.user || !s.profile) redirect("/cliente/login");
+  if (s.profile.rol !== "cliente") redirect(s.profile.rol === "colaborador" ? "/" : "/equipo");
   return { ...s, profile: s.profile };
 }

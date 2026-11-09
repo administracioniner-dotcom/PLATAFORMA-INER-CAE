@@ -1,15 +1,15 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { cambiarCobroDirecto, crearClienteDirecto, eliminarClienteDirecto, guardarClienteDirecto, guardarFechaDocumento, marcarDocumento, moverFaseDirecto } from "@/app/actions";
+import { anadirObservacion, borrarObservacion, cambiarCobroDirecto, contrasenaCliente, crearClienteDirecto, darAccesoCliente, quitarAccesoCliente, eliminarClienteDirecto, guardarClienteDirecto, guardarFechaDocumento, marcarDocumento, moverFaseDirecto } from "@/app/actions";
 import { BotonBorrar } from "@/components/BotonBorrar";
 import { FormAviso } from "@/components/FormAviso";
 import { Submit } from "@/components/Submit";
 import { avisar } from "@/lib/avisar";
-import type { ClienteDirecto, FichaDoc, FichaTipo, MarcaDoc } from "@/lib/types";
-import { FASES, FASE_COLOR, cx, eur, eur0, fecha, num } from "@/lib/utils";
+import type { ClienteDirecto, FichaDoc, FichaTipo, MarcaDoc, ObsFase } from "@/lib/types";
+import { FASES, FASE_COLOR, cx, eur, eur0, fecha, fechaHora, num } from "@/lib/utils";
 
-const FILTROS = [["todos", "Todos"], ["tram", "En tramitación"], ["pend", "Por cobrar"], ["ok", "Cobrados"], ["docs", "Faltan documentos"]] as const;
+const FILTROS = [["todos", "Todos"], ["tram", "En tramitación"], ["pend", "Por pagar"], ["ok", "Pagados"], ["docs", "Faltan documentos"]] as const;
 const ORDENES = [["rec", "Más recientes"], ["nom", "Nombre (A-Z)"], ["fase", "Fase (más avanzada)"], ["imp", "Importe (mayor)"], ["docs", "Documentos que faltan"]] as const;
 type Filtro = (typeof FILTROS)[number][0];
 type Orden = (typeof ORDENES)[number][0];
@@ -20,7 +20,7 @@ const importe = (c: ClienteDirecto) => (c.mwh == null ? null : c.mwh * c.precio_
 const estado = (c: ClienteDirecto) => (c.cobrado_at ? "ok" : c.fase === 4 ? "pend" : "tram");
 const viejo = (iso: string | null | undefined, anios: number) => { if (!iso) return false; const l = new Date(); l.setFullYear(l.getFullYear() - anios); return new Date(iso) < l; };
 
-export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { fichas: FichaTipo[]; docs: FichaDoc[]; clientes: ClienteDirecto[]; marcas: MarcaDoc[]; esAdmin: boolean }) {
+export function MisClientes({ fichas, docs, clientes, marcas, obs, esAdmin }: { fichas: FichaTipo[]; docs: FichaDoc[]; clientes: ClienteDirecto[]; marcas: MarcaDoc[]; obs: ObsFase[]; esAdmin: boolean }) {
   const [m, setM] = useState(() => mapa(marcas));
   useEffect(() => setM(mapa(marcas)), [marcas]);
   const [vista, setVista] = useState<"lista" | "tablero">("lista");
@@ -30,7 +30,7 @@ export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { ficha
   const [modo, setModo] = useState<"todos" | "faltan">("todos");
   const [sel, setSel] = useState<string | null>(null);
   const [panelAbierto, setPanelAbierto] = useState(false);
-  const [pestana, setPestana] = useState<"docs" | "datos">("docs");
+  const [pestana, setPestana] = useState<"docs" | "fases" | "datos" | "acceso">("docs");
   const [nuevoAbierto, setNuevoAbierto] = useState(false);
   const [claveNuevo, setClaveNuevo] = useState(0);
   const [fichaSel, setFichaSel] = useState<Record<string, string>>({});
@@ -66,8 +66,8 @@ export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { ficha
   const caducados = (c: ClienteDirecto) => lista(c).filter((d) => d.aviso_anios && viejo(m.get(clave(c.id, d.id))?.fecha, d.aviso_anios));
 
   const suma = (cs: ClienteDirecto[]) => cs.reduce((a, c) => a + (importe(c) ?? 0), 0);
-  const cobrados = clientes.filter((c) => estado(c) === "ok");
-  const porCobrar = clientes.filter((c) => estado(c) === "pend");
+  const pagados = clientes.filter((c) => estado(c) === "ok");
+  const porPagar = clientes.filter((c) => estado(c) === "pend");
   const enTramite = clientes.filter((c) => estado(c) === "tram");
   const cuenta = (k: Filtro) => clientes.filter((c) => k === "todos" || (k === "docs" ? faltan(c) > 0 : estado(c) === k)).length;
 
@@ -102,19 +102,19 @@ export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { ficha
     const r = await guardarFechaDocumento(c.id, d.id, valor);
     if (r?.error) { setM(antes); avisar(r.error, "error"); }
   }
-  /** «Marcar cobrado» desde la propia fila. */
+  /** «Marcar pagado» desde la propia fila. */
   async function cobrar(id: string) {
     const fd = new FormData();
     fd.set("id", id);
     const r = await cambiarCobroDirecto(fd);
-    if (r?.error) avisar(r.error, "error"); else avisar(r?.ok ?? "Marcado como cobrado");
+    if (r?.error) avisar(r.error, "error"); else avisar(r?.ok ?? "Marcado como pagado");
   }
   const abrir = (id: string) => { setSel(id); setPanelAbierto(true); setPestana("docs"); };
 
   const cobro = (c: ClienteDirecto) => {
     const e = estado(c);
-    return e === "ok" ? <span className="whitespace-nowrap rounded-full bg-batt-50 px-2.5 py-0.5 text-xs font-bold text-batt-700">Cobrado {fecha(c.cobrado_at)}</span>
-      : e === "pend" ? <span className="whitespace-nowrap rounded-full bg-sun-50 px-2.5 py-0.5 text-xs font-bold text-sun-700">Por cobrar</span>
+    return e === "ok" ? <span className="whitespace-nowrap rounded-full bg-batt-50 px-2.5 py-0.5 text-xs font-bold text-batt-700">Pagado {fecha(c.cobrado_at)}</span>
+      : e === "pend" ? <span className="whitespace-nowrap rounded-full bg-sun-50 px-2.5 py-0.5 text-xs font-bold text-sun-700">Por pagar</span>
       : <span className="whitespace-nowrap rounded-full bg-net-50 px-2.5 py-0.5 text-xs font-bold text-net-700">En tramitación</span>;
   };
   const etiqueta = (c: ClienteDirecto) => <span className="rounded-md bg-net-50 px-2 py-0.5 text-xs font-bold tracking-wide text-net-700">{ficha.get(c.ficha_id)?.codigo ?? "—"}</span>;
@@ -150,7 +150,7 @@ export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { ficha
           <p className="mt-1.5 text-sm text-muted">{c.mwh == null ? <span className="font-semibold text-sun-700">Sin MWh todavía</span> : <><span className="font-mono">{num(c.mwh)} MWh × {num(c.precio_mwh)} €/MWh</span> = <span className="num text-ink">{eur(importe(c))}</span></>} · Alta {fecha(c.created_at)}</p>
         </div>
         <div role="tablist" className="flex gap-1 border-b border-line px-3 pt-2">
-          {([["docs", "Documentos"], ["datos", "Datos"]] as const).map(([k, t]) => (
+          {([["docs", "Documentos"], ["fases", "Fases"], ["datos", "Datos"], ["acceso", "Acceso"]] as const).map(([k, t]) => (
             <button key={k} role="tab" type="button" aria-selected={pestana === k} onClick={() => setPestana(k)}
               className={cx("-mb-px border-b-[3px] px-3 py-1.5 text-sm font-semibold", pestana === k ? "border-marca text-ink" : "border-transparent text-muted hover:text-ink")}>{t}</button>
           ))}
@@ -198,6 +198,61 @@ export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { ficha
                 </div>
               ))}
             </>
+          ) : pestana === "fases" ? (
+            <>
+              <p className="mb-2 rounded-xl bg-sun-50 px-3 py-2 text-xs text-sun-700">Lo que escribas aquí <b>lo ve el cliente</b>, justo debajo de cada fase. Escríbelo pensando en él.</p>
+              <ol className="space-y-3">
+                {FASES.map((nombre, i) => {
+                  const lista = obs.filter((o) => o.cliente_id === c.id && o.fase === i);
+                  const estadoFase = i < c.fase ? "hecha" : i === c.fase ? "ahora" : "pendiente";
+                  return (
+                    <li key={nombre} className="rounded-xl border border-line p-3">
+                      <p className="flex flex-wrap items-center gap-2 text-sm font-bold">
+                        <span className="grid h-6 w-6 place-items-center rounded-full text-xs text-white" style={{ background: estadoFase === "pendiente" ? "#9CA3AF" : FASE_COLOR[i] }}>{estadoFase === "hecha" ? "✓" : i + 1}</span>
+                        {nombre}
+                        {estadoFase === "ahora" && <span className="rounded-full bg-sun-50 px-2 py-0.5 text-xs text-sun-700">Fase actual</span>}
+                      </p>
+                      {lista.map((o) => (
+                        <div key={o.id} className="mt-2 flex items-start justify-between gap-2 rounded-lg bg-soft px-3 py-2 text-sm">
+                          <span><span className="block">{o.texto}</span><span className="text-xs text-faint">{fechaHora(o.created_at)}</span></span>
+                          <FormAviso action={borrarObservacion}><input type="hidden" name="id" value={o.id} /><button aria-label="Borrar observación" className="text-xs font-semibold text-net-700 underline underline-offset-2">Borrar</button></FormAviso>
+                        </div>
+                      ))}
+                      <FormAviso action={anadirObservacion} className="mt-2 flex gap-2">
+                        <input type="hidden" name="id" value={c.id} /><input type="hidden" name="fase" value={i} />
+                        <label className="sr-only" htmlFor={`ob-${c.id}-${i}`}>Observación de {nombre}</label>
+                        <input id={`ob-${c.id}-${i}`} name="texto" required maxLength={1000} placeholder="Añadir una observación…" className="input !py-1.5" />
+                        <Submit className="btn btn-ghost !px-4 !py-1.5" pendiente="…">Añadir</Submit>
+                      </FormAviso>
+                    </li>
+                  );
+                })}
+              </ol>
+            </>
+          ) : pestana === "acceso" ? (
+            <>
+              {c.usuario_id ? (
+                <div className="space-y-4">
+                  <p className="rounded-xl bg-batt-50 px-3 py-2 text-sm text-batt-700">✓ Este cliente tiene acceso al portal con <b>{c.email}</b>.</p>
+                  <p className="text-sm text-muted">Entra en la dirección del portal de clientes. Ve su proyecto, las fases con tus observaciones, lo que falta y lo que se le va a pagar.</p>
+                  <FormAviso action={contrasenaCliente} className="space-y-2">
+                    <input type="hidden" name="id" value={c.id} />
+                    <label className="text-xs text-muted" htmlFor={`pw-${c.id}`}>Cambiar su contraseña<input id={`pw-${c.id}`} name="password" type="text" autoComplete="off" required minLength={10} maxLength={72} placeholder="Nueva contraseña (mínimo 10)" className="input mt-1 !py-1.5" /></label>
+                    <Submit className="btn btn-ghost !py-1.5" pendiente="Guardando…">Cambiar contraseña</Submit>
+                  </FormAviso>
+                  <BotonBorrar action={quitarAccesoCliente} campos={{ id: c.id }} boton="Quitar el acceso…" confirmar="Sí, quitar"
+                    aviso="Su cuenta se borra y deja de poder entrar. La ficha, los documentos y las observaciones se conservan." />
+                </div>
+              ) : (
+                <FormAviso action={darAccesoCliente} className="space-y-3">
+                  <input type="hidden" name="id" value={c.id} />
+                  <p className="text-sm text-muted">Crea el acceso del cliente. Pones tú el correo y la contraseña; él entra directamente, sin esperar ningún correo.</p>
+                  <label className="block text-xs text-muted" htmlFor={`ae-${c.id}`}>Correo del cliente<input id={`ae-${c.id}`} name="email" type="email" required maxLength={254} className="input mt-1 !py-1.5" /></label>
+                  <label className="block text-xs text-muted" htmlFor={`ap-${c.id}`}>Contraseña<input id={`ap-${c.id}`} name="password" type="text" autoComplete="off" required minLength={10} maxLength={72} placeholder="Mínimo 10 caracteres" className="input mt-1 !py-1.5" /></label>
+                  <Submit className="btn-primary !py-1.5" pendiente="Creando…">Crear acceso</Submit>
+                </FormAviso>
+              )}
+            </>
           ) : (
             <>
               <FormAviso action={guardarClienteDirecto} className="grid gap-3 sm:grid-cols-2">
@@ -215,7 +270,7 @@ export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { ficha
               </FormAviso>
               <div className="mt-4">
                 <BotonBorrar action={eliminarClienteDirecto} campos={{ id: c.id }} boton="Eliminar cliente…"
-                  aviso={`Se borran el cliente y sus documentos marcados${c.cobrado_at ? ", y se pierde un cobro ya registrado" : ""}. No se puede deshacer.`} />
+                  aviso={`Se borran el cliente y sus documentos marcados${c.cobrado_at ? ", y se pierde un pago ya registrado" : ""}. No se puede deshacer.`} />
               </div>
             </>
           )}
@@ -224,8 +279,8 @@ export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { ficha
         <div className="flex flex-wrap items-center gap-2 border-t border-line bg-soft px-4 py-3">
           <FormAviso action={moverFaseDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="-1" /><button disabled={c.fase === 0} className="btn btn-ghost !px-4 !py-1.5">← Fase anterior</button></FormAviso>
           <FormAviso action={moverFaseDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="1" /><button disabled={c.fase === 4} className="btn btn-ghost !px-4 !py-1.5">Fase siguiente →</button></FormAviso>
-          {c.fase === 4 && !c.cobrado_at && <FormAviso action={cambiarCobroDirecto}><input type="hidden" name="id" value={c.id} /><button className="btn btn-primary !px-4 !py-1.5">Marcar cobrado</button></FormAviso>}
-          {c.cobrado_at && <FormAviso action={cambiarCobroDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="accion" value="quitar" /><button className="text-xs font-semibold text-net-700 underline underline-offset-2">Quitar el cobro</button></FormAviso>}
+          {c.fase === 4 && !c.cobrado_at && <FormAviso action={cambiarCobroDirecto}><input type="hidden" name="id" value={c.id} /><button className="btn btn-primary !px-4 !py-1.5">Marcar pagado</button></FormAviso>}
+          {c.cobrado_at && <FormAviso action={cambiarCobroDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="accion" value="quitar" /><button className="text-xs font-semibold text-net-700 underline underline-offset-2">Quitar el pago</button></FormAviso>}
         </div>
       </>
     );
@@ -237,7 +292,7 @@ export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { ficha
         <div>
           <p className="eyebrow !mb-0">Equipo INER</p>
           <h1 className="text-3xl font-bold tracking-[-0.02em]">Mis clientes</h1>
-          <p className="text-muted">Los clientes que llevas directamente, sin colaborador: ficha, documentos y cobro.</p>
+          <p className="text-muted">Los clientes que llevas directamente, sin colaborador: ficha, documentos, fases y pago.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {esAdmin && <Link href="/equipo/mis-clientes/fichas" className="btn btn-ghost">Gestionar fichas</Link>}
@@ -247,14 +302,14 @@ export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { ficha
 
       <section className="grid gap-3 sm:grid-cols-3" aria-label="Resumen">
         <div className="flex flex-col justify-center rounded-2xl bg-ink px-5 py-3 text-white">
-          <p className="etiqueta !text-white/75">Cobrado hasta hoy</p>
-          <p className="num text-3xl leading-tight">{eur(suma(cobrados))}</p>
-          <p className="text-xs text-white/80">{cobrados.length} cliente{cobrados.length === 1 ? "" : "s"} cobrado{cobrados.length === 1 ? "" : "s"}</p>
+          <p className="etiqueta !text-white/75">Pagado hasta hoy</p>
+          <p className="num text-3xl leading-tight">{eur(suma(pagados))}</p>
+          <p className="text-xs text-white/80">{pagados.length} cliente{pagados.length === 1 ? "" : "s"} pagado{pagados.length === 1 ? "" : "s"}</p>
         </div>
         <div className="tarjeta flex flex-col justify-center px-4 py-3">
-          <p className="etiqueta">Pendiente de cobrar</p>
-          <p className="num text-2xl leading-tight text-sun-700">{eur(suma(porCobrar))}</p>
-          <p className="text-xs text-muted">{porCobrar.length} con CAE expedido, sin cobrar</p>
+          <p className="etiqueta">Pendiente de pagar</p>
+          <p className="num text-2xl leading-tight text-sun-700">{eur(suma(porPagar))}</p>
+          <p className="text-xs text-muted">{porPagar.length} con CAE expedido, sin pagar</p>
         </div>
         <div className="tarjeta flex flex-col justify-center px-4 py-3">
           <p className="etiqueta">En tramitación</p>
@@ -336,7 +391,7 @@ export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { ficha
                           {c.fase === 4 && !c.cobrado_at
                             ? <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); cobrar(c.id); }}
                                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); cobrar(c.id); } }}
-                                className="btn btn-primary !px-3 !py-0.5 !text-xs">Marcar cobrado</span>
+                                className="btn btn-primary !px-3 !py-0.5 !text-xs">Marcar pagado</span>
                             : cobro(c)}
                         </span>
                       </span>
@@ -372,7 +427,7 @@ export function MisClientes({ fichas, docs, clientes, marcas, esAdmin }: { ficha
                       <div className="mt-2 flex flex-wrap items-center gap-1.5">
                         <FormAviso action={moverFaseDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="-1" /><button disabled={c.fase === 0} aria-label="Volver a la fase anterior" className="btn btn-ghost !px-3 !py-0.5">←</button></FormAviso>
                         <FormAviso action={moverFaseDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="1" /><button disabled={c.fase === 4} aria-label="Pasar a la fase siguiente" className="btn btn-ghost !px-3 !py-0.5">→</button></FormAviso>
-                        {c.cobrado_at ? cobro(c) : c.fase === 4 && <FormAviso action={cambiarCobroDirecto}><input type="hidden" name="id" value={c.id} /><button className="btn btn-primary !px-3 !py-0.5">Marcar cobrado</button></FormAviso>}
+                        {c.cobrado_at ? cobro(c) : c.fase === 4 && <FormAviso action={cambiarCobroDirecto}><input type="hidden" name="id" value={c.id} /><button className="btn btn-primary !px-3 !py-0.5">Marcar pagado</button></FormAviso>}
                         <button type="button" onClick={() => { abrir(c.id); setVista("lista"); }} className="ml-auto text-xs font-semibold text-net-700 underline underline-offset-2">Detalle</button>
                       </div>
                     </li>
