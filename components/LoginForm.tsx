@@ -15,7 +15,7 @@ export function LoginForm({ equipo = false, cliente = false }: { equipo?: boolea
         <div className="relative max-w-lg">
           <p className="eyebrow !text-marca">{equipo ? "Equipo INER" : cliente ? "Portal de clientes" : "Portal de colaboradores"}</p>
           <h1 className="text-4xl font-bold leading-[1.1] tracking-[-0.02em] sm:text-5xl">
-            {equipo ? <>Panel del <span className="resalte resalte-solido">equipo</span> INER</> : cliente ? <>Sigue tu <span className="resalte resalte-solido">proyecto</span> con INER</> : <>Tus clientes y tus <span className="resalte resalte-solido">comisiones</span>, en un solo sitio</>}
+            {equipo ? <>Panel del <span className="resalte resalte-solido">equipo</span> INER</> : cliente ? <>Sigue tu <span className="resalte resalte-solido">proyecto</span> con Iner</> : <>Tus clientes y tus <span className="resalte resalte-solido">comisiones</span>, en un solo sitio</>}
           </h1>
           <p className="mt-5 text-lg font-light leading-relaxed text-white/90">
             {equipo ? "Gestiona colaboradores, fases de los CAE y pagos." : cliente ? "Mira en qué fase está tu expediente, qué documentos nos faltan y cuándo se te paga." : "Mira en qué fase está cada cliente que nos has pasado y cuánto te corresponde cobrar."}
