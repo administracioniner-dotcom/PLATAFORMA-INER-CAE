@@ -12,7 +12,7 @@ export type Estado = { error?: string; ok?: string } | undefined;
 /* ---------- Validación (el servidor nunca se fía de lo que llega del navegador) ---------- */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ROLES = ["colaborador", "delegado", "admin"];
+const ROLES = ["colaborador", "admin"]; // el equipo es uno solo: administradores
 const MIN_PASS = 10;
 const MAX_PASS = 72; // límite real de bcrypt: por encima, Supabase recortaría la contraseña sin avisar
 const MAX_NOMBRE_CLIENTE = 200;
