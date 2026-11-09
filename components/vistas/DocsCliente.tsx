@@ -17,7 +17,7 @@ export function DocsCliente({ docs }: { docs: DocCliente[] }) {
           <div className="flex rounded-full bg-soft p-0.5" role="group" aria-label="Qué documentos ver">
             {([["pend", "Pendientes"], ["todos", "Todos"]] as const).map(([k, t]) => (
               <button key={k} type="button" aria-pressed={modo === k} onClick={() => setModo(k)}
-                className={cx("rounded-full px-3 py-0.5 text-sm font-semibold", modo === k ? "bg-ink text-white" : "text-muted")}>{t}</button>
+                className={cx("rounded-full px-3.5 py-1.5 text-sm font-semibold", modo === k ? "bg-ink text-white" : "text-muted")}>{t}</button>
             ))}
           </div>
         )}
