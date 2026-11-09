@@ -37,7 +37,7 @@ export default async function Colaboradores({ searchParams }: { searchParams: Pr
   const conteos = [0, 1, 2, 3, 4].map((i) => filas.reduce((a, r) => a + r.porFase[i], 0));
   return (
     <>
-      <AutoRefresh cada={30} />
+      <AutoRefresh cada={60} />
       <ListaColaboradores filas={filas} tot={tot} conteos={conteos} q={q} f={f} esAdmin={profile.rol === "admin"} meses={meses.map((m) => m.etiqueta)} avances={avances} />
     </>
   );

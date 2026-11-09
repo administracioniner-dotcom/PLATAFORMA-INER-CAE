@@ -13,7 +13,7 @@ export default async function Panel({ searchParams }: { searchParams: Promise<{ 
   ]);
   return (
     <>
-      <AutoRefresh cada={30} />
+      <AutoRefresh cada={60} />
       <PanelColaborador nombre={profile.nombre ?? profile.email} clientes={(data ?? []) as ClienteColab[]} verArchivados={archivados === "1"} sinLeer={sinLeer ?? 0} historial={(hist ?? []) as Cambio[]} />
     </>
   );
