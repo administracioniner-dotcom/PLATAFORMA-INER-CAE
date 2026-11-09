@@ -412,9 +412,10 @@ export async function darAccesoCliente(fd: FormData): Promise<Estado> {
   const clave = crypto.randomUUID();
   const servicio = createServiceClient();
   const { error: e1 } = await servicio.from("invitaciones").upsert({ email, rol: "cliente", nombre: cli.nombre, invitado_por: s.user.id, clave });
-  if (e1) return { error: "No se pudo registrar la cuenta." };
+  if (e1) { console.error("darAccesoCliente: invitación", e1.message); return { error: "No se pudo registrar la cuenta." }; }
   const { data: creada, error: e2 } = await servicio.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { clave_alta: clave, nombre: cli.nombre } });
   if (e2 || !creada.user) {
+    console.error("darAccesoCliente: createUser", e2?.message);
     const yaExiste = !!e2 && /already|registered|exists/i.test(e2.message);
     if (yaExiste) await servicio.from("invitaciones").update({ clave: null }).eq("email", email);
     else await servicio.from("invitaciones").delete().eq("email", email);
@@ -422,6 +423,7 @@ export async function darAccesoCliente(fd: FormData): Promise<Estado> {
   }
   const { error: e3 } = await servicio.from("clientes_directos").update({ usuario_id: creada.user.id, email }).eq("id", id);
   if (e3) {
+    console.error("darAccesoCliente: enlazar", e3.message);
     await servicio.auth.admin.deleteUser(creada.user.id);
     return { error: "No se pudo enlazar la cuenta con el cliente." };
   }
