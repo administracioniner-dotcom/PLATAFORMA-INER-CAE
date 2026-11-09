@@ -312,8 +312,18 @@ export async function eliminarClienteDirecto(fd: FormData): Promise<Estado> {
   if (!s) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
   const id = texto(fd, "id");
   if (!esUuid(id)) return { error: "Petición no válida." };
+  const { data: previo } = await s.supabase.from("clientes_directos").select("usuario_id,email").eq("id", id).maybeSingle();
   const { data: borrado, error } = await s.supabase.from("clientes_directos").delete().eq("id", id).select("id,nombre,mwh,cobrado_at");
   if (error || !borrado?.length) return { error: "No se pudo eliminar el cliente." };
+  // Si tenía acceso al portal, su cuenta no tiene sentido sin el cliente: se borra también (solo si es una cuenta de cliente).
+  if (previo?.usuario_id) {
+    const servicio = createServiceClient();
+    const { data: cuenta } = await servicio.from("profiles").select("rol").eq("id", previo.usuario_id).maybeSingle();
+    if (cuenta?.rol === "cliente") {
+      await servicio.auth.admin.deleteUser(previo.usuario_id);
+      if (previo.email) await servicio.from("invitaciones").delete().eq("email", previo.email);
+    }
+  }
   await auditar(s.user.id, "CLIENTE_DIRECTO_ELIMINADO", id, { nombre: borrado[0].nombre, mwh: borrado[0].mwh, cobrado: !!borrado[0].cobrado_at });
   refrescarMisClientes();
   return { ok: "Cliente eliminado." };

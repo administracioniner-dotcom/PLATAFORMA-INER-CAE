@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { anadirObservacion, borrarObservacion, cambiarCobroDirecto, contrasenaCliente, crearClienteDirecto, darAccesoCliente, quitarAccesoCliente, eliminarClienteDirecto, guardarClienteDirecto, guardarFechaDocumento, marcarDocumento, moverFaseDirecto } from "@/app/actions";
 import { BotonBorrar } from "@/components/BotonBorrar";
+import { CampoContrasena } from "@/components/CampoContrasena";
 import { FormAviso } from "@/components/FormAviso";
 import { Submit } from "@/components/Submit";
 import { avisar } from "@/lib/avisar";
@@ -237,8 +238,9 @@ export function MisClientes({ fichas, docs, clientes, marcas, obs, esAdmin }: { 
                   <p className="text-sm text-muted">Entra en la dirección del portal de clientes. Ve su proyecto, las fases con tus observaciones, lo que falta y lo que se le va a pagar.</p>
                   <FormAviso action={contrasenaCliente} className="space-y-2">
                     <input type="hidden" name="id" value={c.id} />
-                    <label className="text-xs text-muted" htmlFor={`pw-${c.id}`}>Cambiar su contraseña<input id={`pw-${c.id}`} name="password" type="text" autoComplete="off" required minLength={10} maxLength={72} placeholder="Nueva contraseña (mínimo 10)" className="input mt-1 !py-1.5" /></label>
-                    <Submit className="btn btn-ghost !py-1.5" pendiente="Guardando…">Cambiar contraseña</Submit>
+                    <p className="text-sm font-bold">Restablecer su contraseña <span className="font-normal text-muted">· cópiala antes de guardar: no se vuelve a mostrar</span></p>
+                    <CampoContrasena id={`pw-${c.id}`} compacto />
+                    <Submit className="btn-primary !py-1.5" pendiente="Guardando…">Guardar contraseña nueva</Submit>
                   </FormAviso>
                   <BotonBorrar action={quitarAccesoCliente} campos={{ id: c.id }} boton="Quitar el acceso…" confirmar="Sí, quitar"
                     aviso="Su cuenta se borra y deja de poder entrar. La ficha, los documentos y las observaciones se conservan." />
@@ -248,7 +250,7 @@ export function MisClientes({ fichas, docs, clientes, marcas, obs, esAdmin }: { 
                   <input type="hidden" name="id" value={c.id} />
                   <p className="text-sm text-muted">Crea el acceso del cliente. Pones tú el correo y la contraseña; él entra directamente, sin esperar ningún correo.</p>
                   <label className="block text-xs text-muted" htmlFor={`ae-${c.id}`}>Correo del cliente<input id={`ae-${c.id}`} name="email" type="email" required maxLength={254} className="input mt-1 !py-1.5" /></label>
-                  <label className="block text-xs text-muted" htmlFor={`ap-${c.id}`}>Contraseña<input id={`ap-${c.id}`} name="password" type="text" autoComplete="off" required minLength={10} maxLength={72} placeholder="Mínimo 10 caracteres" className="input mt-1 !py-1.5" /></label>
+                  <CampoContrasena id={`ap-${c.id}`} />
                   <Submit className="btn-primary !py-1.5" pendiente="Creando…">Crear acceso</Submit>
                 </FormAviso>
               )}
@@ -268,10 +270,6 @@ export function MisClientes({ fichas, docs, clientes, marcas, obs, esAdmin }: { 
                 <label className="text-xs text-muted" htmlFor={`p-${c.id}`}>€ por MWh<input id={`p-${c.id}`} name="precio_mwh" inputMode="decimal" required defaultValue={c.precio_mwh} className="input mt-1 !py-1.5 font-mono" /></label>
                 <Submit className="btn-primary !py-1.5 sm:col-span-2" pendiente="Guardando…">Guardar</Submit>
               </FormAviso>
-              <div className="mt-4">
-                <BotonBorrar action={eliminarClienteDirecto} campos={{ id: c.id }} boton="Eliminar cliente…"
-                  aviso={`Se borran el cliente y sus documentos marcados${c.cobrado_at ? ", y se pierde un pago ya registrado" : ""}. No se puede deshacer.`} />
-              </div>
             </>
           )}
         </div>
@@ -281,6 +279,8 @@ export function MisClientes({ fichas, docs, clientes, marcas, obs, esAdmin }: { 
           <FormAviso action={moverFaseDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="delta" value="1" /><button disabled={c.fase === 4} className="btn btn-ghost !px-4 !py-1.5">Fase siguiente →</button></FormAviso>
           {c.fase === 4 && !c.cobrado_at && <FormAviso action={cambiarCobroDirecto}><input type="hidden" name="id" value={c.id} /><button className="btn btn-primary !px-4 !py-1.5">Marcar pagado</button></FormAviso>}
           {c.cobrado_at && <FormAviso action={cambiarCobroDirecto}><input type="hidden" name="id" value={c.id} /><input type="hidden" name="accion" value="quitar" /><button className="text-xs font-semibold text-net-700 underline underline-offset-2">Quitar el pago</button></FormAviso>}
+          <div className="ml-auto"><BotonBorrar action={eliminarClienteDirecto} campos={{ id: c.id }} boton="Eliminar cliente…"
+            aviso={`Se borran el cliente${c.usuario_id ? ", su acceso al portal" : ""} y sus documentos marcados${c.cobrado_at ? ", y se pierde un pago ya registrado" : ""}. No se puede deshacer.`} /></div>
         </div>
       </>
     );
