@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { borrarInvitacion, cambiarEstadoCuenta, cambiarNombreDeCuenta, crearCuenta, eliminarCuenta, restablecerContrasena } from "@/app/actions";
+import { restablecerDosPasos, borrarInvitacion, cambiarEstadoCuenta, cambiarNombreDeCuenta, crearCuenta, eliminarCuenta, restablecerContrasena } from "@/app/actions";
 import { CampoContrasena } from "@/components/CampoContrasena";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, tieneDosPasos } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import { fecha } from "@/lib/utils";
 
@@ -26,6 +26,7 @@ export default async function Invitar() {
   // Solo el servidor sabe qué cuentas están desactivadas (campo de Supabase Auth).
   const { data: usuarios } = await createServiceClient().auth.admin.listUsers({ perPage: 200 });
   const desactivadas = new Set((usuarios?.users ?? []).filter((u) => u.banned_until && new Date(u.banned_until).getTime() > Date.now()).map((u) => u.id));
+  const con2fa = new Set((usuarios?.users ?? []).filter((u) => tieneDosPasos(u)).map((u) => u.id));
   const registrados = new Set((personas ?? []).map((p) => p.email));
   const pendientes = (inv ?? []).filter((i) => !registrados.has(i.email));
   return (
@@ -60,7 +61,7 @@ export default async function Invitar() {
               <li key={p.id} className="px-4 py-3 text-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span><span className="font-semibold">{p.nombre ?? p.email}</span> <span className="text-muted">{p.email}</span></span>
-                  <span className="text-muted">{ETIQUETA_ROL[p.rol]} · {desactivadas.has(p.id) ? <span className="font-semibold text-red-700">Desactivado</span> : p.estado === "activo" ? "Activo" : "Aún no ha entrado"}</span>
+                  <span className="text-muted">{ETIQUETA_ROL[p.rol]} · {p.rol === "admin" && <>{con2fa.has(p.id) ? "2FA activada" : "sin 2FA"} · </>}{desactivadas.has(p.id) ? <span className="font-semibold text-red-700">Desactivado</span> : p.estado === "activo" ? "Activo" : "Aún no ha entrado"}</span>
                 </div>
                 <details className="mt-2">
                   <summary className="w-fit cursor-pointer text-xs font-semibold text-net-700 underline underline-offset-2">Gestionar cuenta</summary>
@@ -82,6 +83,13 @@ export default async function Invitar() {
                       </div>
                     </FormEstado>
                   </div>
+                  {p.rol === "admin" && p.id !== profile.id && con2fa.has(p.id) && (
+                    <FormEstado action={restablecerDosPasos} className="mt-3 space-y-2 rounded-xl bg-soft p-4">
+                      <input type="hidden" name="id" value={p.id} />
+                      <p className="text-sm font-bold">Restablecer verificación en dos pasos <span className="font-normal text-muted">· si perdió el móvil; tendrá que activarla de nuevo</span></p>
+                      <Submit className="btn-primary !px-4 !py-1.5" pendiente="Quitando…">Quitar la verificación</Submit>
+                    </FormEstado>
+                  )}
                   {p.id !== profile.id && (
                     <div className="mt-3 grid gap-3 md:grid-cols-2">
                       <FormEstado action={cambiarEstadoCuenta} className="space-y-2 rounded-xl bg-soft p-4">
