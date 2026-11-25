@@ -54,7 +54,9 @@ export async function iniciarSesion(_: Estado, fd: FormData): Promise<Estado> {
   }
   await limpiarFallos(email, ip);
   // El rol lo decide el servidor según la cuenta, no la URL por la que entró.
-  const { profile } = await getSessionProfile();
+  const { profile, mfaPendiente } = await getSessionProfile();
+  // Administrador con dos pasos: la contraseña sola no basta, se le pide el código (o se le obliga a activarlo).
+  if (mfaPendiente) redirect("/equipo/2fa");
   if (!profile) {
     await supabase.auth.signOut();
     return { error: "Tu cuenta no está activa. Contacta con INER." };
@@ -704,6 +706,82 @@ export async function eliminarCuenta(_: Estado, fd: FormData): Promise<Estado> {
   revalidatePath("/equipo/invitar");
   revalidatePath("/equipo");
   return { ok: "Cuenta eliminada." };
+}
+
+/* ---------- Verificación en dos pasos (administradores) ---------- */
+/** Sesión de un administrador que todavía puede estar en el primer factor (no exige aal2: es la que permite completarlo). */
+async function sesionAdminSinSegundoFactor() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: p } = await supabase.from("profiles").select("rol").eq("id", user.id).single();
+  return p?.rol === "admin" ? { supabase, user } : null;
+}
+const CODIGO = /^\d{6}$/;
+
+/** Prepara la activación: crea el factor y devuelve el QR y la clave para la aplicación de autenticación. */
+export async function empezarDosPasos(): Promise<{ error?: string; factorId?: string; qr?: string; secreto?: string }> {
+  const s = await sesionAdminSinSegundoFactor();
+  if (!s) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
+  if ((s.user.factors ?? []).some((f) => f.factor_type === "totp" && f.status === "verified")) return { error: "La verificación en dos pasos ya está activada." };
+  // Intentos anteriores que no se llegaron a confirmar: se limpian para no acumular factores a medias.
+  for (const f of s.user.factors ?? []) if (f.status !== "verified") await s.supabase.auth.mfa.unenroll({ factorId: f.id });
+  const { data, error } = await s.supabase.auth.mfa.enroll({ factorType: "totp", issuer: "Portal INER", friendlyName: `Iner ${Date.now().toString(36)}` });
+  if (error || !data) { console.error("empezarDosPasos", error?.message); return { error: "No se pudo preparar la verificación en dos pasos. Inténtalo de nuevo." }; }
+  return { factorId: data.id, qr: data.totp.qr_code, secreto: data.totp.secret };
+}
+
+async function comprobarCodigo(supabase: Awaited<ReturnType<typeof createClient>>, factorId: string, codigo: string): Promise<boolean> {
+  const { data: reto, error: e1 } = await supabase.auth.mfa.challenge({ factorId });
+  if (e1 || !reto) return false;
+  const { error: e2 } = await supabase.auth.mfa.verify({ factorId, challengeId: reto.id, code: codigo });
+  return !e2;
+}
+
+/** Termina la activación con el primer código que da la aplicación. */
+export async function confirmarDosPasos(_: Estado, fd: FormData): Promise<Estado> {
+  const s = await sesionAdminSinSegundoFactor();
+  if (!s) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
+  const factorId = texto(fd, "factor");
+  const codigo = texto(fd, "codigo").replace(/\s/g, "");
+  if (!esUuid(factorId) || !(s.user.factors ?? []).some((f) => f.id === factorId)) return { error: "Vuelve a empezar la activación." };
+  if (!CODIGO.test(codigo)) return { error: "Escribe los 6 números que muestra tu aplicación." };
+  if (!(await comprobarCodigo(s.supabase, factorId, codigo))) return { error: "Código incorrecto o caducado. Prueba con el siguiente que muestre la aplicación." };
+  await auditar(s.user.id, "DOS_PASOS_ACTIVADO", s.user.id);
+  revalidatePath("/", "layout");
+  redirect("/equipo");
+}
+
+/** Al entrar: pide el código de la aplicación y sube la sesión al segundo factor. */
+export async function verificarDosPasos(_: Estado, fd: FormData): Promise<Estado> {
+  const s = await sesionAdminSinSegundoFactor();
+  if (!s) return { error: "Tu sesión ha caducado. Vuelve a entrar." };
+  const codigo = texto(fd, "codigo").replace(/\s/g, "");
+  if (!CODIGO.test(codigo)) return { error: "Escribe los 6 números que muestra tu aplicación." };
+  const factor = (s.user.factors ?? []).find((f) => f.factor_type === "totp" && f.status === "verified");
+  if (!factor) return { error: "No tienes la verificación en dos pasos activada." };
+  if (!(await comprobarCodigo(s.supabase, factor.id, codigo))) return { error: "Código incorrecto o caducado. Prueba con el siguiente que muestre la aplicación." };
+  revalidatePath("/", "layout");
+  redirect("/equipo");
+}
+
+/** Recuperación: otro administrador quita los dos pasos de una cuenta (por ejemplo, si perdió el móvil). Debe volver a activarlos. */
+export async function restablecerDosPasos(_: Estado, fd: FormData): Promise<Estado> {
+  const s = await sesionAdmin();
+  if (!s) return { error: "Solo un administrador con la verificación completada puede hacerlo." };
+  const id = texto(fd, "id");
+  if (!esUuid(id)) return { error: "Falta la cuenta." };
+  if (id === s.user.id) return { error: "Para tu propia cuenta pídeselo a otro administrador." };
+  const servicio = createServiceClient();
+  const { data, error } = await servicio.auth.admin.mfa.listFactors({ userId: id });
+  if (error) return { error: "No se pudo comprobar la cuenta." };
+  for (const f of data?.factors ?? []) {
+    const { error: e } = await servicio.auth.admin.mfa.deleteFactor({ id: f.id, userId: id });
+    if (e) return { error: "No se pudo quitar la verificación." };
+  }
+  await auditar(s.user.id, "DOS_PASOS_RESTABLECIDO", id);
+  revalidatePath("/equipo/invitar");
+  return { ok: "Verificación en dos pasos quitada. Tendrá que activarla de nuevo al entrar." };
 }
 
 /* ---------- Perfil (cualquier cuenta) ---------- */
