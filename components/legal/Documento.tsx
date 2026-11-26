@@ -9,7 +9,7 @@ export function Documento({ titulo, children }: { titulo: string; children: Reac
       <p className="mt-1 text-sm text-muted">Última actualización: {LEGAL.actualizado}</p>
       {LEGAL.borrador && (
         <p role="note" className="mt-4 rounded-xl bg-sun-50 px-4 py-3 text-sm text-sun-700">
-          Texto base pendiente de revisión legal. Los datos entre corchetes se completan antes de darlo por definitivo.
+          Texto adaptado de iner.es, pendiente de revisión por el asesor legal de INER antes de darlo por definitivo.
         </p>
       )}
       <div className="mt-6 space-y-3 text-[15px] leading-relaxed text-ink [&_a]:font-semibold [&_a]:underline [&_a]:underline-offset-2 [&_h2]:mt-8 [&_h2]:text-xl [&_h2]:font-bold [&_li]:ml-5 [&_li]:list-disc [&_ul]:space-y-1">
