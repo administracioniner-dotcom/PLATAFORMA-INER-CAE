@@ -4,15 +4,17 @@
  */
 export const LEGAL = {
   borrador: true,
-  razonSocial: "[Razón social de INER]",
-  nif: "[NIF]",
-  registro: "[Datos de inscripción en el Registro Mercantil]",
-  domicilio: "Parque Científico y Tecnológico de Albacete, Pase de la Innovación, 3 · Edificio 4, Módulo 6 · 02006 Albacete",
+  // Datos tomados de iner.es (Aviso legal y Política de privacidad).
+  razonSocial: "INER SMART ENERGY SYSTEMS, S.L.",
+  nif: "B02614337",
+  registro: "Registro Mercantil de Albacete, tomo 890, libro 654, folio 85",
+  domicilio: "Parque Científico Tecnológico de CLM, Paseo de la Innovación, 3, Edificio 4, Módulo 8, 02006 Albacete",
   email: "info@iner.es",
-  telefono: "+34 900 84 84 02",
+  telefono: "900 848 402",
   /** Correo para ejercer derechos de protección de datos. */
   emailPrivacidad: "info@iner.es",
   actualizado: "26 de noviembre de 2026",
+  web: "iner.es",
 } as const;
 
 export const ENLACES_LEGALES = [
