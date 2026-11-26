@@ -2,7 +2,9 @@ import { iniciarSesion } from "@/app/actions";
 import { FormEstado } from "@/components/FormEstado";
 import { Submit } from "@/components/Submit";
 import { InputContrasena } from "@/components/InputContrasena";
+import Link from "next/link";
 import { Marca } from "@/components/Marca";
+import { ENLACES_LEGALES } from "@/lib/legal";
 
 export function LoginForm({ equipo = false, cliente = false }: { equipo?: boolean; cliente?: boolean }) {
   return (
@@ -22,7 +24,7 @@ export function LoginForm({ equipo = false, cliente = false }: { equipo?: boolea
           </p>
         </div>
       </section>
-      <section className="flex items-center justify-center p-6">
+      <section className="flex flex-col items-center justify-center gap-10 p-6">
         <FormEstado action={iniciarSesion} className="w-full max-w-sm space-y-5">
           <div>
             <h2 className="text-3xl font-bold tracking-[-0.02em]">{equipo ? "Acceso del equipo" : cliente ? "Accede a tu proyecto" : "Entrar"}</h2>
@@ -39,6 +41,9 @@ export function LoginForm({ equipo = false, cliente = false }: { equipo?: boolea
           <Submit className="btn-primary flecha w-full !py-3" pendiente="Entrando…">Entrar</Submit>
           <p className="text-sm text-muted">{cliente ? "¿No recuerdas tu contraseña o no tienes acceso? Escríbenos a info@iner.es o llama al 900 84 84 02." : "¿No recuerdas tu contraseña? Pídesela a tu contacto en INER."}</p>
         </FormEstado>
+        <nav aria-label="Información legal" className="flex flex-wrap justify-center gap-x-5 gap-y-0.5 text-xs text-muted">
+          {ENLACES_LEGALES.map((e) => <Link key={e.href} href={e.href} className="inline-block py-1 underline-offset-2 hover:text-ink hover:underline">{e.texto}</Link>)}
+        </nav>
       </section>
     </main>
   );
