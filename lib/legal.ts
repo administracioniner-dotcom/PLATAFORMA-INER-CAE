@@ -3,7 +3,7 @@
  * `borrador` muestra un aviso en las páginas hasta que un asesor legal revise los textos: ponerlo en false al publicarlos.
  */
 export const LEGAL = {
-  borrador: true,
+  borrador: false,
   // Datos tomados de iner.es (Aviso legal y Política de privacidad).
   razonSocial: "INER SMART ENERGY SYSTEMS, S.L.",
   nif: "B02614337",
