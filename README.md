@@ -9,6 +9,7 @@ Next.js 15 + Tailwind + Supabase (proyecto `portal-colaboradores-cae`, Fráncfor
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave pública (*publishable*) de Supabase. Es pública por diseño: la seguridad la dan las políticas RLS. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | *(opcionales)* Cuenta de correo para los avisos de mensajes nuevos. `SMTP_PASS` es un secreto. Ver «Avisos de mensajes nuevos». |
 | `MFA_ADMIN_OBLIGATORIO` | *(opcional)* Con valor `1`, todos los administradores deben activar la verificación en dos pasos (TOTP) para entrar al panel. Sin ella, es voluntaria; pero quien la activa siempre debe usarla. Se activa en `/equipo/2fa`; otro administrador puede restablecerla desde «Crear colaborador → Gestionar cuenta». |
+| `INTEGRACION_SECRETO` | *(opcional)* Clave compartida con otras aplicaciones de INER (hoy, Expedientes CAE) para `/api/integracion/*`. Mínimo 32 caracteres aleatorios. **Solo servidor, marcar como *Sensitive*.** Sin ella esas rutas responden 503 y no aceptan nada. Hoy solo simulan: no escriben en la base de datos. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API Keys → *secret*. **Solo servidor, nunca en el código.** Marcar como *Sensitive*. |
 
 ## Cuentas
