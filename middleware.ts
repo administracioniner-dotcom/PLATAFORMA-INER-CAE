@@ -1,7 +1,8 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLICAS = ["/login", "/equipo/login", "/cliente/login", "/legal"];
+// /api/integracion no usa sesión: cada ruta se protege sola con la clave INTEGRACION_SECRETO (lib/integracion.ts).
+const PUBLICAS = ["/login", "/equipo/login", "/cliente/login", "/legal", "/api/integracion"];
 
 export async function middleware(req: NextRequest) {
   let res = NextResponse.next({ request: req });
